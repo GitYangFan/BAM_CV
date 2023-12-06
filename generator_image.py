@@ -6,6 +6,7 @@ import tensorflow as tf
 import os
 import pandas as pd
 
+
 # class ImageDataGeneratorWrapper(tf.keras.utils.Sequence):
 #     def __init__(self, image_directory, batch_size=32, image_size=(224, 224), steps_per_epoch=128):
 #         self.image_directory = image_directory
@@ -43,7 +44,7 @@ import pandas as pd
 # image_generator = ImageDataGeneratorWrapper(image_directory=file_path, batch_size=32, image_size=(48, 48), steps_per_epoch=128)
 # print(image_generator)
 
-class CustomDataGenerator(tf.keras.utils.Sequence):
+class DataGenerator_image(tf.keras.utils.Sequence):
     def __init__(self, pixels, emotion, batch_size):
         self.pixels = pixels
         self.emotion = emotion
@@ -65,6 +66,7 @@ class CustomDataGenerator(tf.keras.utils.Sequence):
 
         return batch_pixels, batch_emotion
 
+
 def load_image(image_directory):
     # current_dir = os.getcwd()
     # image_directory = os.path.join(current_dir, 'dataset', 'train.csv')
@@ -75,20 +77,17 @@ def load_image(image_directory):
     for index, row in dataset.iterrows():
         emotion.append(row['emotion'])
         pixels.append(row['pixels'])
-
-    # # df['pixels'] = df['pixels'].apply(lambda x: [float(num) for num in x.split()])
-    # # pixels_np = np.array(pixels, dtype=np.float32)
-    # pixels_tensor = tf.convert_to_tensor(pixels)
-    # # emotion_np = np.array(emotion, dtype=np.int32)
-    # emotion_tensor = tf.convert_to_tensor(emotion)
-    # print(pixels_tensor.shape)
-    # print(emotion_tensor.shape)
-    # samples_tensor = tf.stack([pixels_tensor, emotion_tensor], axis=-1)
-    return pixels, emotion
+    pixels_array = []
+    for img in pixels:
+        img_list = img.split()
+        img_array = [int(value) for value in img_list]
+        img_array = np.array(img_array, dtype=np.uint8)
+        pixels_array.append(img_array)
+    return pixels_array, emotion
 
 
-current_dir = os.getcwd()
-image_directory = os.path.join(current_dir, 'dataset', 'train.csv')
-pixels, emotion = load_image('./dataset/train.csv')
-print(len(pixels))
-print(len(emotion))
+# current_dir = os.getcwd()
+# image_directory = os.path.join(current_dir, 'dataset', 'train.csv')
+# pixels, emotion = load_image('./dataset/train.csv')
+# print(len(pixels))
+# print(len(emotion))
