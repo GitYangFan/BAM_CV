@@ -61,10 +61,21 @@ class DataGenerator_image(tf.keras.utils.Sequence):
         batch_emotion = self.emotion[start:end]
         batch_pixels = np.array(batch_pixels, dtype=np.float32)
         batch_emotion = np.array(batch_emotion, dtype=np.int32)
+        # image_height, image_width = 48, 48
+        # batch_pixels = batch_pixels.reshape(image_height, image_width)
+        batch_pixels = batch_pixels.reshape((self.batch_size, 48, 48, 1))
+        batch_emotion = batch_emotion.reshape((self.batch_size, 1, 1))
+        tensor_pixels = tf.convert_to_tensor(batch_pixels, dtype=tf.float32)
+        tensor_emotion = tf.convert_to_tensor(batch_emotion, dtype=tf.int32)
 
         # preprocessing
 
-        return batch_pixels, batch_emotion
+        # combine the pixels with emotion
+        samples = (tensor_emotion, tensor_pixels)
+        print(samples[0].shape)
+        print(samples[1].shape)
+
+        return samples
 
 
 def load_image(image_directory):
@@ -89,5 +100,6 @@ def load_image(image_directory):
 # current_dir = os.getcwd()
 # image_directory = os.path.join(current_dir, 'dataset', 'train.csv')
 # pixels, emotion = load_image('./dataset/train.csv')
+# test = DataGenerator_image(pixels, emotion, batch_size=32)
 # print(len(pixels))
 # print(len(emotion))
