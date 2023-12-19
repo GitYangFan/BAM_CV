@@ -48,7 +48,7 @@ lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
 #     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler], verbose=True)
 
 spe = 1
-ep = 10
+ep = 3
 
 pixels, emotion = generator_image.load_image('./dataset/train_short.csv')
 
@@ -62,6 +62,7 @@ end_time = time.time()
 
 # Compute the elapsed time
 elapsed_time = end_time - start_time
+# print(modell.variables)
 
 modell.save("BAM.hd5")
 np.save("BAM_history", history.history)

@@ -4,6 +4,9 @@ To run the code:
 Install dependencies: python 3.10.8, Tensorflow, Numpy, Pandas
 Using conda, you can use conda env create -f env_BAM.yml
 
+To use conda environment:
+source activate env_BAM
+
 To train the neural network, use python edge_classifier_BAM.py
 
 Hyperparameters of the model can be changed in edge_classifier_BAM.py by changing
