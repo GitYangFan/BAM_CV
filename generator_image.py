@@ -28,7 +28,7 @@ class DataGenerator_image(tf.keras.utils.Sequence):
         image_height, image_width = 48, 48
 
         batch_pixels = batch_pixels.reshape((self.batch_size, image_height, image_width, 1))
-        batch_pixels = convert_to_multiple_channels(batch_pixels, 3)  # expand the channel (batch. 48, 48, 3)
+        # batch_pixels = convert_to_multiple_channels(batch_pixels, 3)  # expand the channel (batch. 48, 48, 3)
         batch_emotion = batch_emotion.reshape((self.batch_size, 7, 1))  # there are 7 categories of emotions
         batch_emotion = convert_to_multiple_channels(batch_emotion, image_height)  # expand the channel (batch. 7, 48)
         tensor_pixels = tf.convert_to_tensor(batch_pixels, dtype=tf.float32)
@@ -81,7 +81,7 @@ def convert_to_multiple_channels(batch_pixels, num_channel):
 
 # current_dir = os.getcwd()
 # image_directory = os.path.join(current_dir, 'dataset', 'train.csv')
-pixels, emotion = load_image('./dataset/train_short.csv')
+# pixels, emotion = load_image('./dataset/train_short.csv')
 # emotion_one_hot = one_hot(emotion)
 # batch_emotion = np.array(emotion_one_hot, dtype=np.int32)
 # batch_emotion = batch_emotion.reshape((len(emotion), 1, 7))
@@ -89,6 +89,9 @@ pixels, emotion = load_image('./dataset/train_short.csv')
 # test = DataGenerator_image(pixels, emotion, batch_size=32)
 # print(len(pixels))
 # print(len(emotion))
+
+# test one-hot encoder:
+# pixels, emotion = load_image('./dataset/train_short.csv')
 # index = 1
 # batch_size = 32
 # start = index * batch_size

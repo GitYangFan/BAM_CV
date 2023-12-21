@@ -493,7 +493,7 @@ class layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(tf.keras.layers.Layer):
     def build(self, input_shape):
         neurons_in = tf.cast(input_shape[0][1],tf.int32)+10
         self.w = self.add_weight(
-            shape=(neurons_in, 3),
+            shape=(neurons_in, 7),      # the output shape
             initializer=tf.keras.initializers.GlorotNormal(),
             trainable=True,
             #constraint=tf.keras.constraints.NonNeg(),
