@@ -47,8 +47,8 @@ lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
 #     genC.DataGeneratorChebyshev(N, M_min, M_max, d_min, d_max),
 #     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler], verbose=True)
 
-spe = 3
-ep = 3
+spe = 128
+ep = 1000
 
 pixels, emotion = generator_image.load_image('./dataset/train_short.csv')
 
