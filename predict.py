@@ -61,8 +61,15 @@ for img in pixels:
     image_height, image_width = 48, 48
     img_array = img_array.reshape((image_height, image_width, 1))
     prediction = model.predict(img_array)
-    # print(prediction[0][0][0].shape)
-    predicted_class = np.argmax(prediction[0][0][0], axis=0)
+    prediction_sum = np.sum(prediction, axis=0)     # sum the first dimension of tensor (48,1,7)
+    predicted_class = np.argmax(prediction_sum[0])    # find the most possible class
+    print('possibility:', prediction_sum[0])
+    print('class:', predicted_class)
+    # predicted_class = np.argmax(prediction[0][0][0])
+    # print(prediction.shape)
+    # prediction_flatten = prediction.flatten()
+    # predicted_class = np.argmax(prediction_flatten)
+    # print('class:', prediction_flatten[predicted_class])
     classes_pred.append(predicted_class)
 
 print(classes_pred)
@@ -70,8 +77,8 @@ print(classes_pred)
 
 # ---------------------- evaluation ------------------------
 
-print(len(classes_true))
-print(len(classes_pred))
+# print(len(classes_true))
+# print(len(classes_pred))
 print('accuracy:', sk.accuracy_score(classes_true, classes_pred))
 print('precision:', sk.precision_score(classes_true, classes_pred, average='macro'))
 print('recall:', sk.recall_score(classes_true, classes_pred, average='macro'))
@@ -79,7 +86,7 @@ print('f1-score:', sk.f1_score(classes_true, classes_pred, average='macro'))
 
 confusion_matrix = sk.confusion_matrix(classes_true, classes_pred)
 classes = ['0=Angry', '1=Disgust', '2=Fear', '3=Happy', '4=Sad', '5=Surprise', '6=Neutral']
-plt.figure(figsize=(6, 6))
+plt.figure(figsize=(10, 8))
 sns.heatmap(confusion_matrix, annot=True, fmt="d", cmap="Blues", xticklabels=classes, yticklabels=classes)
 plt.ylabel('Actual')
 plt.xlabel('Predicted')

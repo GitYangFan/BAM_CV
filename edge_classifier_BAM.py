@@ -47,10 +47,10 @@ lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
 #     genC.DataGeneratorChebyshev(N, M_min, M_max, d_min, d_max),
 #     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler], verbose=True)
 
-spe = 128
-ep = 1000
+spe = 10
+ep = 100
 
-pixels, emotion = generator_image.load_image('./dataset/train_short.csv')
+pixels, emotion = generator_image.load_image('./dataset/train_short2.csv')
 
 modell.summary()
 
@@ -69,3 +69,4 @@ np.save("BAM_history", history.history)
 model.save_weights("BAM_weights")
 with open("runtime_BAM.txt", "w") as file:
     file.write(str(elapsed_time))
+print('pretrained model saved! ')

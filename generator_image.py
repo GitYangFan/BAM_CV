@@ -21,6 +21,14 @@ class DataGenerator_image(tf.keras.utils.Sequence):
         start = index * self.batch_size
         end = (index + 1) * self.batch_size
         batch_pixels = self.pixels[start:end]
+        print('batch size:', len(batch_pixels))
+        print('current data index is:', start)
+        if len(batch_pixels) != self.batch_size:
+            print('there is no enough data, data index is:', start)
+            end = len(self.pixels) - 1
+            start = end - self.batch_size
+            batch_pixels = self.pixels[start:end]
+            print('replacing with the last possible batch with index:', start)
         batch_emotion = one_hot(self.emotion[start:end])
         batch_pixels = np.array(batch_pixels, dtype=np.float32)
         batch_emotion = np.array(batch_emotion, dtype=np.int32)
