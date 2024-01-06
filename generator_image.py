@@ -5,47 +5,62 @@ from tensorflow.keras.utils import to_categorical
 import tensorflow as tf
 import os
 import pandas as pd
+import data_loader
 
 
 class DataGenerator_image(tf.keras.utils.Sequence):
-    def __init__(self, pixels, emotion, batch_size):
-        self.pixels = pixels
-        self.emotion = emotion
+    def __init__(self, folder, labels, batch_size):
+        self.folder = folder
+        self.labels = labels
         self.batch_size = batch_size
-        self.indexes = np.arange(len(self.pixels))
+        # counting the total number of images in the folder
+        image_extensions = {'.jpg', '.jpeg', '.png', '.gif'}
+        image_count = 0
+        for root, dirs, files in os.walk(self.folder):
+            for file in files:
+                if os.path.splitext(file)[1].lower() in image_extensions:
+                    image_count += 1
+        print('image_count:', image_count)
+        self.total_size = image_count
+        # self.indexes = np.arange(len(self.pixels))
 
     def __len__(self):
-        return int(np.ceil(len(self.pixels) / self.batch_size))
+        return int(np.ceil(self.total_size / self.batch_size))
 
     def __getitem__(self, index):
         start = index * self.batch_size
         end = (index + 1) * self.batch_size
-        batch_pixels = self.pixels[start:end]
-        print('batch size:', len(batch_pixels))
+        # batch_pixels = self.pixels[start:end]
+        # print('0 index is:', self.pixels[0])
+        # print('batch size:', len(batch_pixels))
+        batch_pixels = data_loader.load_img(self.folder, start, end)
         print('current data index is:', start)
         if len(batch_pixels) != self.batch_size:
             print('there is no enough data, data index is:', start)
-            end = len(self.pixels) - 1
+            end = self.total_size - 1
             start = end - self.batch_size
-            batch_pixels = self.pixels[start:end]
+            batch_pixels = data_loader.load_img(self.folder, start, end)
             print('replacing with the last possible batch with index:', start)
-        batch_emotion = one_hot(self.emotion[start:end])
+        batch_labels = one_hot(self.labels[start:end])
         batch_pixels = np.array(batch_pixels, dtype=np.float32)
-        batch_emotion = np.array(batch_emotion, dtype=np.int32)
+        batch_labels = np.array(batch_labels, dtype=np.int32)
 
         image_height, image_width = 48, 48
+        # image_height, image_width = 224, 224
 
-        batch_pixels = batch_pixels.reshape((self.batch_size, image_height, image_width, 1))
-        # batch_pixels = convert_to_multiple_channels(batch_pixels, 3)  # expand the channel (batch. 48, 48, 3)
-        batch_emotion = batch_emotion.reshape((self.batch_size, 7, 1))  # there are 7 categories of emotions
-        batch_emotion = convert_to_multiple_channels(batch_emotion, image_height)  # expand the channel (batch. 7, 48)
+        # batch_pixels = batch_pixels.reshape((self.batch_size, image_height, image_width, 1))
+        batch_pixels = batch_pixels.reshape((self.batch_size, image_height, image_width))
+        # batch_pixels = convert_to_multiple_channels(batch_pixels, 3)  # expand the channel (batch, 48, 48, 3)
+        batch_labels = batch_labels.reshape((self.batch_size, 7))  # there are 7 categories of emotions
+        # batch_labels = batch_labels.reshape((self.batch_size, 7, 1))  # there are 7 categories of emotions
+        # batch_labels = convert_to_multiple_channels(batch_labels, image_height)  # expand the channel (batch, 7, 48)
+        # tensor_pixels = tf.convert_to_tensor(batch_pixels, dtype=tf.float32)
         tensor_pixels = tf.convert_to_tensor(batch_pixels, dtype=tf.float32)
-        tensor_emotion = tf.convert_to_tensor(batch_emotion, dtype=tf.int32)
-
-
+        tensor_labels = tf.convert_to_tensor(batch_labels, dtype=tf.int32)
 
         # combine the pixels with emotion
-        samples = (tensor_emotion, tensor_pixels)
+        # samples = (tensor_labels, tensor_pixels)
+        samples = (tensor_pixels, tensor_labels)
         print(samples[0].shape)
         print(samples[1].shape)
 

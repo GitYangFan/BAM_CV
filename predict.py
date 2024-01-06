@@ -51,26 +51,40 @@ custom_objects = {
 }
 
 # load the pretrained model
-model = tf.keras.models.load_model('./BAM.hd5', custom_objects=custom_objects)
+# model = tf.keras.models.load_model('./BAM.hd5', custom_objects=custom_objects)
+model = tf.keras.models.load_model('./BAM.hd5')
 
-pixels, classes_true = data_loader.load_test_set('./dataset/test_short.csv')
+# pixels, classes_true = data_loader.load_test_set('./dataset/test_short.csv')
+img_folder = './dataset/fer2013/train_debug'
+csv_folder = './dataset/fer2013/train_label_debug.csv'
+classes_true = data_loader.load_label(csv_folder)
+pixels = data_loader.load_img(img_folder, 0, 20)
 classes_pred = []
 
-for img in pixels:
-    img_array = np.array(img, dtype=np.float32)
-    image_height, image_width = 48, 48
-    img_array = img_array.reshape((image_height, image_width, 1))
-    prediction = model.predict(img_array)
-    prediction_sum = np.sum(prediction, axis=0)     # sum the first dimension of tensor (48,1,7)
-    predicted_class = np.argmax(prediction_sum[0])    # find the most possible class
-    print('possibility:', prediction_sum[0])
-    print('class:', predicted_class)
-    # predicted_class = np.argmax(prediction[0][0][0])
-    # print(prediction.shape)
-    # prediction_flatten = prediction.flatten()
-    # predicted_class = np.argmax(prediction_flatten)
-    # print('class:', prediction_flatten[predicted_class])
+pixels_array = np.array(pixels, dtype=np.float32)
+image_height, image_width = 48, 48
+pixels_array = pixels_array.reshape((len(pixels_array), image_height, image_width))
+predictions = model.predict(pixels_array)
+for prediction in predictions:
+    predicted_class = np.argmax(prediction)    # find the most possible class for each image
+    print('possibility:', prediction, 'class:', predicted_class)
     classes_pred.append(predicted_class)
+
+# for img in pixels:
+#     img_array = np.array(img, dtype=np.float32)
+#     image_height, image_width = 48, 48
+#     img_array = img_array.reshape((1, image_height, image_width))
+#     prediction = model.predict(img_array)
+#     # prediction_sum = np.sum(prediction, axis=0)     # sum the first dimension of tensor (48,1,7)
+#     predicted_class = np.argmax(prediction[0])    # find the most possible class
+#     print('possibility:', prediction[0])
+#     print('class:', predicted_class)
+#     # predicted_class = np.argmax(prediction[0][0][0])
+#     # print(prediction.shape)
+#     # prediction_flatten = prediction.flatten()
+#     # predicted_class = np.argmax(prediction_flatten)
+#     # print('class:', prediction_flatten[predicted_class])
+#     classes_pred.append(predicted_class)
 
 print(classes_pred)
 # predictions = model.predict(pixels)

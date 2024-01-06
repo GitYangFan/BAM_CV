@@ -55,6 +55,8 @@ def my_accuracy_categorical_N_d_d_c(y_true, y_pred):
     y_p = get_off_diag_var_size_N_d_d_c(y_pred)
     y_p = tf.keras.backend.clip(y_p, 0, 1)
     acc = tf.keras.metrics.categorical_accuracy(y_t, y_p)
+    print('y_true:', y_true)
+    print('y_pred:', y_pred)
     return acc
 
 

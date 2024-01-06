@@ -7,6 +7,7 @@ import numpy as np
 import generator_cheby_BAM as genC
 import generator_image
 import helpers_BAM as h
+import data_loader
 
 start_time = time.time()
 
@@ -18,14 +19,20 @@ model = cl.model_attention_final(n_channels_main=100, data_layers=10, cov_layers
 
 inputs = tf.keras.Input((None, None))
 outputs = model(inputs)
+# print('outputs:', outputs)
 modell = tf.keras.Model(inputs, outputs)
 
+# modell.compile(
+#     loss=h.my_loss_categorical_penalty,
+#     optimizer=tf.keras.optimizers.Adam(clipnorm=1, learning_rate=0.0005),
+#     metrics=[h.my_accuracy_categorical_N_d_d_c, h.my_accuracy_categorical_N_d_d_c_binary, h.my_loss_categorical_N_d_d_c,
+#              h.my_loss_categorical_N_d_d_c_binary,
+#              h.my_penalty_metric, h.precisionBinary, h.recallBinary, h.aucBinary]
+# )
+
 modell.compile(
-    loss=h.my_loss_categorical_penalty,
-    optimizer=tf.keras.optimizers.Adam(clipnorm=1, learning_rate=0.0005),
-    metrics=[h.my_accuracy_categorical_N_d_d_c, h.my_accuracy_categorical_N_d_d_c_binary, h.my_loss_categorical_N_d_d_c,
-             h.my_loss_categorical_N_d_d_c_binary,
-             h.my_penalty_metric, h.precisionBinary, h.recallBinary, h.aucBinary]
+    loss='categorical_crossentropy',  # Use the default categorical cross-entropy loss function
+    optimizer=tf.keras.optimizers.Adam(clipnorm=1, learning_rate=0.1)
 )
 
 
@@ -47,15 +54,20 @@ lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
 #     genC.DataGeneratorChebyshev(N, M_min, M_max, d_min, d_max),
 #     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler], verbose=True)
 
-spe = 3
+spe = 30
 ep = 100
 
-pixels, emotion = generator_image.load_image('./dataset/train_short2.csv')
+# pixels, emotion = generator_image.load_image('./dataset/train.csv')
+img_folder = './dataset/fer2013/train'
+csv_folder = './dataset/fer2013/train_label.csv'
+# img_folder = './dataset/fairface025/train'
+# csv_folder = './dataset/fairface025/fairface_label_train.csv'
+labels_list = data_loader.load_label(csv_folder)
 
 modell.summary()
 
 history = modell.fit(
-    generator_image.DataGenerator_image(pixels, emotion, batch_size=32),
+    generator_image.DataGenerator_image(img_folder, labels_list, batch_size=5),
     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler], verbose=True)
 
 end_time = time.time()

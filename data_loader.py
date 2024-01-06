@@ -1,7 +1,10 @@
+import os
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 from image_preprocessing import preprocessing
+from PIL import Image
 
 
 def load_train_set(image_directory):
@@ -52,3 +55,53 @@ def load_test_set(image_directory):
         # flattening
         pixels_array.append(img_array_flattened)
     return pixels_array, emotion
+
+
+def load_label(csv_folder):
+    # load the labels
+    data = pd.read_csv(csv_folder)
+    labels_list = []
+    for index, row in data.iterrows():
+        labels_list.append(row['emotion'])
+        # if row['gender'] == 'Male':
+        #     labels_list.append(0)
+        # else:
+        #     labels_list.append(1)
+    return labels_list
+
+
+def load_img(folder, start, end):
+    # load the jpg images
+    pixels_list = []
+    print('loading image in the range of:', start, end)
+    for i in range(start, end):
+        img_path = os.path.join(folder, f"{i+1}.jpg")
+        if os.path.exists(img_path):
+            with Image.open(img_path) as img:
+                # convert to grey image
+                img = img.convert('L')
+                # convert to numpy array and flatten
+                pixels = np.array(img).flatten()
+                pixels_list.append(pixels)
+        else:
+            print(f"Image {img_path} not found.")
+
+    # 将列表转换为NumPy数组
+    # pixels_array = np.array(pixels_list)
+    return pixels_list
+
+
+"""
+-------- test ------------
+"""
+# --------- test the image loader ---------
+# folder = './dataset/fer2013/train'
+# start = 1
+# end = 10
+# pixels_list = load_img(folder, start, end)
+# print('pixels_list:', pixels_list)
+
+# --------- test the label loader ---------
+# csv_folder = './dataset/fer2013/train_label.csv'
+# labels_list = load_label(csv_folder)
+# print('length of labels_list:', len(labels_list))

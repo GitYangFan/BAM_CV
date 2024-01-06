@@ -60,7 +60,7 @@ def main():
     pixels = []
 
     # load the dataset
-    csv_file_path = './dataset/train.csv'
+    csv_file_path = './dataset/train_short.csv'
     dataset = pd.read_csv(csv_file_path)
 
     for index, row in dataset.iterrows():

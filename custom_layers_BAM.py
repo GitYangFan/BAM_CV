@@ -57,7 +57,11 @@ class model_attention_final(tf.keras.Model):
             out = getattr(self, f"layer_N_C_d_d_bilinear_attention{l}")(out)
             out = getattr(self, f"layer_N_C_d_d_spd_activation{l}")(out)
         oout=[out,M]
+        # print('oout:', oout)
         cov3 = self.layer_N_c_d_d_to_N_d_d_3_softmax(oout)
+        cov3 = tf.reduce_mean(cov3, axis=[1,2], keepdims=True)
+        cov3 = tf.squeeze(cov3, [1,2])
+        # print('cov3:', cov3)
         return cov3
 
     def get_config(self):
@@ -492,6 +496,8 @@ class layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(tf.keras.layers.Layer):
 
     def build(self, input_shape):
         neurons_in = tf.cast(input_shape[0][1],tf.int32)+10
+        print('neurons_in:', neurons_in)
+        # print('(neurons_in, 7):', (neurons_in, 7))
         # print('input shape:',input_shape)
         self.w = self.add_weight(
             shape=(neurons_in, 7),      # the output shape
@@ -645,14 +651,14 @@ class layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(tf.keras.layers.Layer):
         res_h2 = tf.nn.relu(tf.matmul(matrixNormalization_N_d_d_c(h2), self.w4) + self.b4)
 
         h3 = h2+tf.matmul(res_h2, self.w5) + self.b5
-        probs=tf.nn.softmax(tf.matmul(h3,self.w),axis=3)
+        probs=tf.nn.softmax(tf.matmul(h3,self.w),axis=2)
+        # print('probs:', probs)
         return probs
 
     def get_config(self):
         return {}
 
     def compute_output_shape(self, input_shape):
-        print('input shape:',input_shape)
         # return tf.concat([input_shape[0], 1, 1, 7], 0)        # the output shape
         return tf.concat([input_shape[0], input_shape[2], input_shape[3], 3], 0)  # the output shape
 
