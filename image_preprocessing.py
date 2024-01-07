@@ -36,7 +36,7 @@ def random_rotate_image(image):
     return ndimage.rotate(image, angle, reshape=False, mode='nearest')
 
 
-def preprocessing(image_height, image_width, img_gray_array):
+def preprocessing(img_gray_array):
     # pre whiten
     img_preprocessing = prewhiten(img_gray_array)
 

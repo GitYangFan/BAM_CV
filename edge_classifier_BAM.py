@@ -32,7 +32,8 @@ modell = tf.keras.Model(inputs, outputs)
 
 modell.compile(
     loss='categorical_crossentropy',  # Use the default categorical cross-entropy loss function
-    optimizer=tf.keras.optimizers.Adam(clipnorm=1, learning_rate=0.1)
+    optimizer=tf.keras.optimizers.Adam(clipnorm=1, learning_rate=0.0005),
+    metrics=['accuracy']
 )
 
 
@@ -54,20 +55,23 @@ lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
 #     genC.DataGeneratorChebyshev(N, M_min, M_max, d_min, d_max),
 #     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler], verbose=True)
 
-spe = 30
-ep = 100
+spe = 128
+ep = 1000
 
 # pixels, emotion = generator_image.load_image('./dataset/train.csv')
-img_folder = './dataset/fer2013/train'
-csv_folder = './dataset/fer2013/train_label.csv'
-# img_folder = './dataset/fairface025/train'
-# csv_folder = './dataset/fairface025/fairface_label_train.csv'
-labels_list = data_loader.load_label(csv_folder)
+train_folder = './dataset/fer2013/train'
+train_csv_folder = './dataset/fer2013/train_label.csv'
+train_labels_list = data_loader.load_label(train_csv_folder)
+
+val_folder = './dataset/fer2013/val'
+val_csv_folder = './dataset/fer2013/val_label.csv'
+val_labels_list = data_loader.load_label(train_csv_folder)
 
 modell.summary()
 
 history = modell.fit(
-    generator_image.DataGenerator_image(img_folder, labels_list, batch_size=5),
+    generator_image.DataGenerator_image(train_folder, train_labels_list, batch_size=32),
+    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, batch_size=32),
     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler], verbose=True)
 
 end_time = time.time()

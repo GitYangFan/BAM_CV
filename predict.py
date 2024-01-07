@@ -88,6 +88,7 @@ for prediction in predictions:
 
 print('classes_pred:', classes_pred)
 print('class_true:', classes_true)
+
 # predictions = model.predict(pixels)
 
 # ---------------------- evaluation ------------------------
@@ -96,7 +97,7 @@ print('class_true:', classes_true)
 # print(len(classes_pred))
 print('accuracy:', sk.accuracy_score(classes_true, classes_pred))
 print('precision:', sk.precision_score(classes_true, classes_pred, average='macro'))
-print('recall:', sk.recall_score(classes_true, classes_pred, average='macro'))
+# print('recall:', sk.recall_score(classes_true, classes_pred, average='macro'))
 print('f1-score:', sk.f1_score(classes_true, classes_pred, average='macro'))
 
 confusion_matrix = sk.confusion_matrix(classes_true, classes_pred)
