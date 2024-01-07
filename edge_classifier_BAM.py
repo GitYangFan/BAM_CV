@@ -59,8 +59,8 @@ spe = 128
 ep = 1000
 
 # pixels, emotion = generator_image.load_image('./dataset/train.csv')
-train_folder = './dataset/fer2013/train_debug'
-train_csv_folder = './dataset/fer2013/train_label_debug.csv'
+train_folder = './dataset/fer2013/train'
+train_csv_folder = './dataset/fer2013/train_label.csv'
 train_labels_list, train_names = data_loader.load_label(train_csv_folder)
 
 val_folder = './dataset/fer2013/val'
