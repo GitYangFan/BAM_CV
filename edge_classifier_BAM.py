@@ -61,17 +61,17 @@ ep = 1000
 # pixels, emotion = generator_image.load_image('./dataset/train.csv')
 train_folder = './dataset/fer2013/train'
 train_csv_folder = './dataset/fer2013/train_label.csv'
-train_labels_list = data_loader.load_label(train_csv_folder)
+train_labels_list, train_names = data_loader.load_label(train_csv_folder)
 
 val_folder = './dataset/fer2013/val'
 val_csv_folder = './dataset/fer2013/val_label.csv'
-val_labels_list = data_loader.load_label(train_csv_folder)
+val_labels_list, val_names = data_loader.load_label(train_csv_folder)
 
 modell.summary()
 
 history = modell.fit(
-    generator_image.DataGenerator_image(train_folder, train_labels_list, batch_size=32),
-    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, batch_size=32),
+    generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=32),
+    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=32),
     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler], verbose=True)
 
 end_time = time.time()

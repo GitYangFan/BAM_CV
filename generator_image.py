@@ -9,10 +9,11 @@ import data_loader
 
 
 class DataGenerator_image(tf.keras.utils.Sequence):
-    def __init__(self, folder, labels, batch_size):
+    def __init__(self, folder, labels, img_names, batch_size):
         self.folder = folder
         self.labels = labels
         self.batch_size = batch_size
+        self.img_names = img_names
         # counting the total number of images in the folder
         image_extensions = {'.jpg', '.jpeg', '.png', '.gif'}
         image_count = 0
@@ -33,13 +34,13 @@ class DataGenerator_image(tf.keras.utils.Sequence):
         # batch_pixels = self.pixels[start:end]
         # print('0 index is:', self.pixels[0])
         # print('batch size:', len(batch_pixels))
-        batch_pixels = data_loader.load_img(self.folder, start, end)
+        batch_pixels = data_loader.load_img(self.folder, self.img_names, start, end)
         print('current data index is:', start)
         if len(batch_pixels) != self.batch_size:
             print('there is no enough data, data index is:', start)
             end = self.total_size - 1
             start = end - self.batch_size
-            batch_pixels = data_loader.load_img(self.folder, start, end)
+            batch_pixels = data_loader.load_img(self.folder, self.img_names, start, end)
             print('replacing with the last possible batch with index:', start)
         batch_labels = one_hot(self.labels[start:end])
         batch_pixels = np.array(batch_pixels, dtype=np.float32)

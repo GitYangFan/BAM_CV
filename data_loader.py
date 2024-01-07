@@ -62,13 +62,16 @@ def load_label(csv_folder):
     # load the labels
     data = pd.read_csv(csv_folder)
     labels_list = []
+    img_name = []
     for index, row in data.iterrows():
         labels_list.append(row['emotion'])
+        img_name.append(row['file'])
         # if row['gender'] == 'Male':
         #     labels_list.append(0)
         # else:
         #     labels_list.append(1)
-    return labels_list
+    return labels_list, img_name
+
 
 def get_cov_from_img(img_array):
     mean = np.mean(img_array)
@@ -76,12 +79,14 @@ def get_cov_from_img(img_array):
     cov_of_img = np.cov(centered_data, rowvar=False)
     return cov_of_img
 
-def load_img(folder, start, end):
+
+def load_img(folder, img_names, start, end):
     # load the jpg images
     pixels_list = []
     print('\n loading image in the range of:', start, end)
     for i in range(start, end):
-        img_path = os.path.join(folder, f"{i+1}.jpg")
+        img_name = img_names[i]
+        img_path = os.path.join(folder, img_name)
         if os.path.exists(img_path):
             with Image.open(img_path) as img:
                 # convert to grey image
