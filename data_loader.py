@@ -83,7 +83,7 @@ def get_cov_from_img(img_array):
 def load_img(folder, img_names, start, end):
     # load the jpg images
     pixels_list = []
-    print('\n loading image in the range of:', start, end)
+    print('\nloading image in the range of:', img_names[start], 'to', img_names[end])
     for i in range(start, end):
         img_name = img_names[i]
         img_path = os.path.join(folder, img_name)
