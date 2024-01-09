@@ -83,9 +83,13 @@ def get_cov_from_img(img_array):
 def load_img(folder, img_names, start, end):
     # load the jpg images
     pixels_list = []
-    print('\nloading image in the range of:', start, 'to', end)
-    for i in range(start, end):
-        img_name = img_names[i]
+    # find the first img number
+    dot_idx = img_names[0].rfind('.')
+    first_img_idx = int(img_names[0][:dot_idx])
+    # add the first img number to the start and end
+    print('\nloading image in the range of:', start+first_img_idx, 'to', end+first_img_idx)
+    for i in range(start+first_img_idx, end+first_img_idx):
+        img_name = "{}.jpg".format(i)
         img_path = os.path.join(folder, img_name)
         if os.path.exists(img_path):
             with Image.open(img_path) as img:
@@ -123,7 +127,7 @@ def load_img(folder, img_names, start, end):
 # train_folder = './dataset/fairface025/train'
 # train_csv_folder = './dataset/fer2013/train_label.csv'
 # _, train_names = load_label(train_csv_folder)
-# start = 1
+# start = 0
 # end = 10
 # pixels_list = load_img(train_folder, train_names, start, end)
 # print('pixels_list:', pixels_list)

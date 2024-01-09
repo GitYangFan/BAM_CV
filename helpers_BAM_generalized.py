@@ -3,18 +3,21 @@ import tensorflow as tf
 
 # define a class to view gradient of each epoch
 class GradientCallback(tf.keras.callbacks.Callback):
-    def on_train_batch_end(self, batch, logs=None):
-        logs = logs or {}
-        training_data = self.model._training_end_step_data
-        if training_data is None:
-            return
-        x, y, sample_weight = training_data
-        with tf.GradientTape() as tape:
-            predictions = self.model(x, training=True)  # 获取模型预测
-            loss_value = self.model.compiled_loss(y, predictions, sample_weight)  # 计算损失值
-        grads = tape.gradient(loss_value, self.model.trainable_variables)  # 计算梯度
-        avg_grad_norm = tf.reduce_mean([tf.norm(grad) for grad in grads]).numpy()  # 计算平均梯度范数
-        print(f'Batch {batch}, Average Gradient Norm: {avg_grad_norm}')
+    def __init__(self, model):
+        super(GradientCallback, self).__init__()
+        self.model = model
+
+    def on_batch_end(self, epoch, logs=None):
+        gradients = []
+        for layer in self.model.layers:
+            if len(layer.trainable_weights) > 0:
+                with tf.GradientTape() as tape:
+                    gradients.append(tape.gradient(self.model.loss, layer.trainable_weights))
+
+        for i, layer_gradients in enumerate(gradients):
+            for j, var in enumerate(layer_gradients):
+                mean_gradient = tf.reduce_mean(tf.abs(var)).numpy()
+                print(f'Epoch {epoch + 1}, Layer {i + 1}, Weight {j + 1}, Mean Gradient: {mean_gradient:.4f}')
 
 
 def my_loss_categorical_N_d_d_c(y_true, y_pred):
