@@ -7,6 +7,7 @@ import numpy as np
 import generator_cheby_BAM as genC
 import generator_image
 import helpers_BAM as h
+import helpers_BAM_generalized as hg
 import data_loader
 
 start_time = time.time()
@@ -63,15 +64,18 @@ train_folder = './dataset/fer2013/train'
 train_csv_folder = './dataset/fer2013/train_label.csv'
 train_labels_list, train_names = data_loader.load_label(train_csv_folder)
 
-val_folder = './dataset/fer2013/val'
-val_csv_folder = './dataset/fer2013/val_label.csv'
+val_folder = './dataset/fer2013/train_debug'
+val_csv_folder = './dataset/fer2013/train_label_debug.csv'
 val_labels_list, val_names = data_loader.load_label(val_csv_folder)
+
+# create a gradient viewer callback
+gradient_callback = hg.GradientCallback()
 
 modell.summary()
 
 history = modell.fit(
-    generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=5),
-    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=5),
+    generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=32),
+    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=32),
     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler], verbose=True)
 
 end_time = time.time()

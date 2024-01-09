@@ -36,15 +36,15 @@ def random_rotate_image(image):
     return ndimage.rotate(image, angle, reshape=False, mode='nearest')
 
 
-def preprocessing(img_gray_array):
+def preprocessing(img_gray_array, standard_size):
     # pre whiten
-    img_preprocessing = prewhiten(img_gray_array)
+    img_preprocessing_array = prewhiten(img_gray_array)
 
     # random crop (95% of original size)
     # img_preprocessing = tf.image.random_crop(img_preprocessing, [int(0.95 * image_height), int(0.95 * image_width)])
 
     # random flip left and right
-    img_preprocessing = tf.expand_dims(img_preprocessing, axis=-1)
+    img_preprocessing = tf.expand_dims(img_preprocessing_array, axis=-1)
     img_preprocessing = tf.image.random_flip_left_right(img_preprocessing)
 
     # random rotate the image
@@ -52,7 +52,16 @@ def preprocessing(img_gray_array):
 
     # standardization
     img_preprocessing = tf.image.per_image_standardization(img_preprocessing)
-    return img_preprocessing
+    img_preprocessing = tf.squeeze(img_preprocessing, 2)
+
+    # calculate the covariance matrix
+    # img_flattened = tf.reshape(img_preprocessing, (-1, 1))    # flatten the image(abandon because error)
+    img_vector = img_preprocessing.numpy()
+    mean = np.mean(img_vector)
+    centered_data = img_vector - mean
+    cov_matrix = np.cov(centered_data, rowvar=False)
+
+    return cov_matrix
 
 
 def main():

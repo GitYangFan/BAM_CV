@@ -36,6 +36,7 @@ class DataGenerator_image(tf.keras.utils.Sequence):
         # print('batch size:', len(batch_pixels))
         batch_pixels = data_loader.load_img(self.folder, self.img_names, start, end)
         print('current data index is:', start)
+        # check if there is enough img in the batch
         if len(batch_pixels) != self.batch_size:
             print('there is no enough data, data index is:', start)
             end = self.total_size - 1
@@ -68,6 +69,17 @@ class DataGenerator_image(tf.keras.utils.Sequence):
         return samples
 
 
+def one_hot(label):
+    one_hot_labels = to_categorical(label, num_classes=7)
+    # print(one_hot_labels)
+    return one_hot_labels
+
+
+def convert_to_multiple_channels(batch_pixels, num_channel):
+    three_channel_batch = np.repeat(batch_pixels, num_channel, axis=-1)
+    return three_channel_batch
+
+
 def load_image(image_directory):
     # current_dir = os.getcwd()
     # image_directory = os.path.join(current_dir, 'dataset', 'train.csv')
@@ -93,15 +105,6 @@ def load_image(image_directory):
     return pixels_array, emotion
 
 
-def one_hot(label):
-    one_hot_labels = to_categorical(label, num_classes=7)
-    # print(one_hot_labels)
-    return one_hot_labels
-
-
-def convert_to_multiple_channels(batch_pixels, num_channel):
-    three_channel_batch = np.repeat(batch_pixels, num_channel, axis=-1)
-    return three_channel_batch
 
 # current_dir = os.getcwd()
 # image_directory = os.path.join(current_dir, 'dataset', 'train.csv')

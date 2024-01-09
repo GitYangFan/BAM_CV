@@ -83,7 +83,7 @@ def get_cov_from_img(img_array):
 def load_img(folder, img_names, start, end):
     # load the jpg images
     pixels_list = []
-    print('\nloading image in the range of:', img_names[start], 'to', img_names[end])
+    print('\nloading image in the range of:', start, 'to', end)
     for i in range(start, end):
         img_name = img_names[i]
         img_path = os.path.join(folder, img_name)
@@ -96,12 +96,9 @@ def load_img(folder, img_names, start, end):
                 img_resized = img.resize(standard_size, Image.LANCZOS)
                 # convert the img to numpy array
                 img_array = np.array(img_resized)
-                # get the covariance matrix from img
-                cov_of_img = get_cov_from_img(img_array)
-                # print('cov_of_img:', cov_of_img)
                 # preprocessing
-                img_array_preprocessed = preprocessing(cov_of_img)
-                # convert to numpy array and flatten
+                img_array_preprocessed = preprocessing(img_array, standard_size)
+                # flatten the img pixels
                 pixels = tf.reshape(img_array_preprocessed, [-1])
                 pixels_list.append(pixels)
 
@@ -123,10 +120,12 @@ def load_img(folder, img_names, start, end):
 -------- test ------------
 """
 # --------- test the image loader ---------
-# folder = './dataset/fairface025/train'
+# train_folder = './dataset/fairface025/train'
+# train_csv_folder = './dataset/fer2013/train_label.csv'
+# _, train_names = load_label(train_csv_folder)
 # start = 1
 # end = 10
-# pixels_list = load_img(folder, start, end)
+# pixels_list = load_img(train_folder, train_names, start, end)
 # print('pixels_list:', pixels_list)
 
 # --------- test the label loader ---------
