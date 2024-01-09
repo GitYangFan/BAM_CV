@@ -1,6 +1,22 @@
 import tensorflow as tf
 
 
+# define a class to view gradient of each epoch
+class GradientCallback(tf.keras.callbacks.Callback):
+    def on_train_batch_end(self, batch, logs=None):
+        logs = logs or {}
+        training_data = self.model._training_end_step_data
+        if training_data is None:
+            return
+        x, y, sample_weight = training_data
+        with tf.GradientTape() as tape:
+            predictions = self.model(x, training=True)  # 获取模型预测
+            loss_value = self.model.compiled_loss(y, predictions, sample_weight)  # 计算损失值
+        grads = tape.gradient(loss_value, self.model.trainable_variables)  # 计算梯度
+        avg_grad_norm = tf.reduce_mean([tf.norm(grad) for grad in grads]).numpy()  # 计算平均梯度范数
+        print(f'Batch {batch}, Average Gradient Norm: {avg_grad_norm}')
+
+
 def my_loss_categorical_N_d_d_c(y_true, y_pred):
     y_t = get_off_diag_var_size_N_d_d_c(y_true)
     y_p = get_off_diag_var_size_N_d_d_c(y_pred)
