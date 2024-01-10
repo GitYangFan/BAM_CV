@@ -33,7 +33,7 @@ modell = tf.keras.Model(inputs, outputs)
 
 modell.compile(
     loss='categorical_crossentropy',  # Use the default categorical cross-entropy loss function
-    optimizer=tf.keras.optimizers.Adam(clipnorm=1, learning_rate=0.0005),
+    optimizer=tf.keras.optimizers.Adam(clipnorm=1, learning_rate=5),
     metrics=['accuracy']
 )
 
@@ -56,10 +56,10 @@ lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
 #     genC.DataGeneratorChebyshev(N, M_min, M_max, d_min, d_max),
 #     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler], verbose=True)
 
-# spe = 128
-# ep = 1000
-spe = 1
-ep = 3
+spe = 128
+ep = 1000
+# spe = 3
+# ep = 10
 
 # pixels, emotion = generator_image.load_image('./dataset/train.csv')
 train_folder = './dataset/fer2013/train'
@@ -71,14 +71,14 @@ val_csv_folder = './dataset/fer2013/train_label_debug.csv'
 val_labels_list, val_names = data_loader.load_label(val_csv_folder)
 
 # create a gradient viewer callback
-gradient_callback = hg.GradientCallback(modell)
+gradient_callback = hg.GradientCallback(generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=20))
 
 modell.summary()
 
 history = modell.fit(
-    generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=5),
-    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=5),
-    epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler], verbose=True)
+    generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=32),
+    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=20),
+    epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler, gradient_callback], verbose=True)
 
 end_time = time.time()
 

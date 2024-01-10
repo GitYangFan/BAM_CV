@@ -3,14 +3,22 @@ import tensorflow as tf
 
 # define a class to view gradient of each epoch
 class GradientCallback(tf.keras.callbacks.Callback):
+    def __init__(self, val_data_generator):
+        super(GradientCallback, self).__init__()
+        self.val_data_generator = val_data_generator
     def on_batch_end(self, batch, logs=None):
         gradients = self._get_gradients()
-        print(f'Batch {batch + 1}, Gradients: {gradients}')
+        avg_grad_norm = tf.reduce_mean([tf.norm(grad) for grad in gradients]).numpy()
+        print(f'Batch {batch + 1}, avg_grad_norm: {avg_grad_norm}')
 
     def _get_gradients(self):
+        # val_data = next(self.val_data_generator)
+        # x_val, y_val = val_data
+        x_val, y_val = self.val_data_generator.__getitem__(0)
         with tf.GradientTape() as tape:
-            predictions = self.model(self.model.input)
-            loss = tf.keras.losses.categorical_crossentropy(self.model.target, predictions)
+            y_pred = self.model(x_val)
+            # loss = tf.keras.losses.categorical_crossentropy(self.model.target, predictions)
+            loss = self.model.compiled_loss(y_val, y_pred)
         gradients = tape.gradient(loss, self.model.trainable_weights)
 
         return gradients
