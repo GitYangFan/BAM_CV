@@ -3,21 +3,17 @@ import tensorflow as tf
 
 # define a class to view gradient of each epoch
 class GradientCallback(tf.keras.callbacks.Callback):
-    def __init__(self, model):
-        super(GradientCallback, self).__init__()
-        self.model = model
+    def on_batch_end(self, batch, logs=None):
+        gradients = self._get_gradients()
+        print(f'Batch {batch + 1}, Gradients: {gradients}')
 
-    def on_batch_end(self, epoch, logs=None):
-        gradients = []
-        for layer in self.model.layers:
-            if len(layer.trainable_weights) > 0:
-                with tf.GradientTape() as tape:
-                    gradients.append(tape.gradient(self.model.loss, layer.trainable_weights))
+    def _get_gradients(self):
+        with tf.GradientTape() as tape:
+            predictions = self.model(self.model.input)
+            loss = tf.keras.losses.categorical_crossentropy(self.model.target, predictions)
+        gradients = tape.gradient(loss, self.model.trainable_weights)
 
-        for i, layer_gradients in enumerate(gradients):
-            for j, var in enumerate(layer_gradients):
-                mean_gradient = tf.reduce_mean(tf.abs(var)).numpy()
-                print(f'Epoch {epoch + 1}, Layer {i + 1}, Weight {j + 1}, Mean Gradient: {mean_gradient:.4f}')
+        return gradients
 
 
 def my_loss_categorical_N_d_d_c(y_true, y_pred):
