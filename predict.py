@@ -57,8 +57,8 @@ model = tf.keras.models.load_model('./BAM.hd5')
 # pixels, classes_true = data_loader.load_test_set('./dataset/test_short.csv')
 img_folder = './dataset/fer2013/train_debug'
 csv_folder = './dataset/fer2013/train_label_debug.csv'
-classes_true = data_loader.load_label(csv_folder)
-pixels = data_loader.load_img(img_folder, 0, 20)
+classes_true, names = data_loader.load_label(csv_folder)
+pixels = data_loader.load_img(img_folder, names, 0, 20)
 classes_pred = []
 
 pixels_array = np.array(pixels, dtype=np.float32)
