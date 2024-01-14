@@ -33,7 +33,7 @@ modell = tf.keras.Model(inputs, outputs)
 
 modell.compile(
     loss='categorical_crossentropy',  # Use the default categorical cross-entropy loss function
-    optimizer=tf.keras.optimizers.Adam(clipnorm=1, learning_rate=5),
+    optimizer=tf.keras.optimizers.Adam(clipnorm=1, learning_rate=0.5),
     metrics=['accuracy']
 )
 
@@ -56,10 +56,10 @@ lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
 #     genC.DataGeneratorChebyshev(N, M_min, M_max, d_min, d_max),
 #     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler], verbose=True)
 
-spe = 128
-ep = 1000
-# spe = 3
-# ep = 10
+# spe = 128
+# ep = 1000
+spe = 3
+ep = 10
 
 # pixels, emotion = generator_image.load_image('./dataset/train.csv')
 train_folder = './dataset/fer2013/train'
