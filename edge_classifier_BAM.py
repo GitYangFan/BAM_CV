@@ -18,7 +18,8 @@ ddtype = tf.float32
 model = cl.model_attention_final(n_channels_main=100, data_layers=10, cov_layers=10, inner_channels=100, N_exp=3,
                                  N_heads=5)
 
-inputs = tf.keras.Input((None, None))
+# inputs = tf.keras.Input((None, None))
+inputs = tf.keras.Input((48, 48))
 outputs = model(inputs)
 # print('outputs:', outputs)
 modell = tf.keras.Model(inputs, outputs)
