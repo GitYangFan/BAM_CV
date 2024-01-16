@@ -77,8 +77,8 @@ gradient_callback = hg.GradientCallback(generator_image.DataGenerator_image(val_
 modell.summary()
 
 history = modell.fit(
-    generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=32),
-    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=20),
+    generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=8),
+    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=4),
     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler, gradient_callback], verbose=True)
 
 end_time = time.time()
