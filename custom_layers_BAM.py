@@ -55,9 +55,11 @@ class model_attention_final(tf.keras.Model):
         weight = 0
         # compute the covariance matrices
         # cov1 = data_N_M_d_c_to_cov_N_c_d_d(out)
-        cov1 = data_N_M_d_c_to_cov_N_c_d_d_image(out)
 
-        out = cov1
+        cov1 = data_N_M_d_c_to_cov_N_c_d_d_image(out)               # shape (N, M*d, M*d, 1)
+        cov1_res = self.layer_N_M_d_1_to_N_M_d_C_residual(cov1)     # shape (N, M*d, M*d, C)    get the channel again for attention machanism
+        out = tf.transpose(cov1_res, [0, 3, 1, 2])                  # shape (N, C, M*d, M*d)
+
         for l in range(1, self.cov_layers + 1):
             out = getattr(self, f"layer_N_C_d_d_bilinear_attention{l}")(out)
             out = getattr(self, f"layer_N_C_d_d_spd_activation{l}")(out)
@@ -462,22 +464,20 @@ class layer_N_C_d_d_spd_activation_scaled(tf.keras.layers.Layer):
 # @tf.function(reduce_retracing=True)
 def data_N_M_d_c_to_cov_N_c_d_d_image(input):
     """
-    Convert input tensors of shape (N, M, d ,C) to covariance matrices of shape (N, 1, C, C).
+    Convert input tensors of shape (N, M, d ,C) to covariance matrices of shape (N, M*d, M*d, 1).
     (Reference GitHub: https://github.com/d-acharya/CovPoolFER/blob/master/conv_feature_pooling/src/models/covpoolnet.py)
 
     Args:
         input: (tf.Tensor): Input tensor of shape (N, M, d, C).
 
     Returns:
-        tf.Tensor: Covariance matrices of shape (N, 1, C, C).
+        tf.Tensor: Covariance matrices of shape (N, M*d, M*d, 1).
 
     """
     # first flatten to (N,M*d,C)
     features = tf.reshape(input, shape=(-1, tf.shape(input)[1] * tf.shape(input)[2], tf.shape(input)[3]))   # shape (N, M*d, C)
     # shape_f = features.get_shape().as_list()
     shape_f = tf.shape(features)
-    print('test')
-    print('shape_f:', shape_f)
     # centers_batch = tf.reduce_mean(features, 1)     # shape (N, 1, C)
     centers_batch = tf.reduce_mean(tf.transpose(features, [0, 2, 1]), 2)
     centers_batch = tf.reshape(centers_batch, [shape_f[0], 1, shape_f[2]])      # shape (N, 1, C)
@@ -486,15 +486,16 @@ def data_N_M_d_c_to_cov_N_c_d_d_image(input):
     # compute the covariance matrices with the shape of (N, M*d, M*d)
     tmp = tf.subtract(features, centers_batch)
     tmp_t = tf.transpose(tmp, [0, 2, 1])
-    cov = 1 / tf.cast((shape_f[1] - 1), tf.float32) * tf.matmul(tmp_t, tmp)
+    cov = 1 / tf.cast((shape_f[1] - 1), tf.float32) * tf.matmul(tmp, tmp_t)
     # Add trace on the cov to ensures the positive definite and prevents numerical instability
     trace_t = tf.linalg.trace(cov)
     trace_t = tf.reshape(trace_t, [shape_f[0], 1])
-    trace_t = tf.tile(trace_t, [1, shape_f[2]])
+    trace_t = tf.tile(trace_t, [1, shape_f[1]])
     trace_t = 0.0001 * tf.linalg.diag(trace_t)      # multiply small weight 0.0001
-    cov_trace = tf.add(cov, trace_t)        # shape (N, C, C)
+    cov_trace = tf.add(cov, trace_t)        # shape (N, M*d, M*d)
     # Dimension extension of cov for further layers
-    cov_trace_expanded = tf.expand_dims(cov_trace, axis=1)      # shape (N, 1, C, C)
+    cov_trace_expanded = tf.expand_dims(cov_trace, axis=3)      # shape (N, M*d, M*d, 1)
+    # print('cov_trace_expanded:', cov_trace_expanded)
     return cov_trace_expanded
 
 
@@ -539,7 +540,7 @@ class layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(tf.keras.layers.Layer):
 
     def build(self, input_shape):
         neurons_in = tf.cast(input_shape[0][1],tf.int32)+10
-        print('neurons_in:', neurons_in)
+        # print('neurons_in:', neurons_in)
         # print('(neurons_in, 7):', (neurons_in, 7))
         # print('input shape:',input_shape)
         self.w = self.add_weight(

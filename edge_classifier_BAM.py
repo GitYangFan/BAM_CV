@@ -15,7 +15,7 @@ start_time = time.time()
 tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
 
-model = cl.model_attention_final(n_channels_main=100, data_layers=10, cov_layers=10, inner_channels=100, N_exp=3,
+model = cl.model_attention_final(n_channels_main=10, data_layers=1, cov_layers=3, inner_channels=10, N_exp=3,
                                  N_heads=5)
 
 # inputs = tf.keras.Input((None, None))
