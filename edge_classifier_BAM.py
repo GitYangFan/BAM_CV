@@ -15,7 +15,7 @@ start_time = time.time()
 tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
 
-model = cl.model_attention_final(n_channels_main=10, data_layers=1, cov_layers=3, inner_channels=10, N_exp=3,
+model = cl.model_attention_final(n_channels_main=5, data_layers=1, cov_layers=3, inner_channels=5, N_exp=3,
                                  N_heads=5)
 
 # inputs = tf.keras.Input((None, None))
@@ -34,7 +34,7 @@ modell = tf.keras.Model(inputs, outputs)
 
 modell.compile(
     loss='categorical_crossentropy',  # Use the default categorical cross-entropy loss function
-    optimizer=tf.keras.optimizers.Adam(clipnorm=1, learning_rate=0.5),
+    optimizer=tf.keras.optimizers.Adam(clipnorm=1, learning_rate=0.001),
     metrics=['accuracy']
 )
 
@@ -60,7 +60,7 @@ lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
 # spe = 128
 # ep = 1000
 spe = 3
-ep = 10
+ep = 30
 
 # pixels, emotion = generator_image.load_image('./dataset/train.csv')
 train_folder = './dataset/fer2013/train'
@@ -77,8 +77,8 @@ gradient_callback = hg.GradientCallback(generator_image.DataGenerator_image(val_
 modell.summary()
 
 history = modell.fit(
-    generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=8),
-    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=4),
+    generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=20),
+    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=20),
     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler, gradient_callback], verbose=True)
 
 end_time = time.time()

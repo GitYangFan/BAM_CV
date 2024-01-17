@@ -9,7 +9,9 @@ class GradientCallback(tf.keras.callbacks.Callback):
     def on_batch_end(self, batch, logs=None):
         gradients = self._get_gradients()
         avg_grad_norm = tf.reduce_mean([tf.norm(grad) for grad in gradients]).numpy()
+        print('---------------------------------------------------')
         print(f'Batch {batch + 1}, avg_grad_norm: {avg_grad_norm}')
+        print('---------------------------------------------------')
 
     def _get_gradients(self):
         # val_data = next(self.val_data_generator)
