@@ -42,18 +42,18 @@ class model_attention_final(tf.keras.Model):
             setattr(self, f"layer_N_C_d_d_spd_activation{l}",
                     layer_N_C_d_d_spd_activation_scaled(N_exp=self.N_exp))
         self.layer_N_c_d_d_to_N_d_d_3_softmax = layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2()
-        self.layer_N_M_d_1_to_N_x_x_C_conv = layer_N_M_d_1_to_N_x_x_C_conv(num_conv_layers=2, num_filters=5)
+        self.layer_N_M_d_1_to_N_x_x_C_conv = layer_N_M_d_1_to_N_x_x_C_conv(num_conv_layers=2, num_filters=10)
 
     def call(self, inputs, **kwargs):
         M = tf.shape(inputs)[1]
         o1 = tf.expand_dims(inputs, 3)
 
         # use the convolution layers to reduce the complexity
-        o1_conv = self.layer_N_M_d_1_to_N_x_x_C_conv(o1)
+        # o1_conv = self.layer_N_M_d_1_to_N_x_x_C_conv(o1)
         # compute the covariance matrices here
-        cov1 = data_N_M_d_c_to_cov_N_c_d_d_image(o1_conv)
+        # cov1 = data_N_M_d_c_to_cov_N_Md_Md_1_image(o1_conv)
 
-        o2 = self.layer_N_M_d_1_to_N_M_d_C_residual(cov1)
+        o2 = self.layer_N_M_d_1_to_N_M_d_C_residual(o1)
         out = o2
         for l in range(1, self.data_layers + 1):
             out = getattr(self, f"layer_MH_attention_features_for_each_sample{l}")(out)
@@ -66,9 +66,10 @@ class model_attention_final(tf.keras.Model):
         # compute the covariance matrices
         # cov1 = data_N_M_d_c_to_cov_N_c_d_d(out)
 
-        # cov1 = data_N_M_d_c_to_cov_N_c_d_d_image(out)               # shape (N, M*d, M*d, 1)
-        # cov1_res = self.layer_N_M_d_1_to_N_M_d_C_residual(cov1)     # shape (N, M*d, M*d, C)    get the channel again for attention machanism
-        out = tf.transpose(out, [0, 3, 1, 2])  # shape (N, C, M*d, M*d)
+        out = self.layer_N_M_d_1_to_N_x_x_C_conv(out)  # reduce the complexity
+        cov1 = data_N_M_d_c_to_cov_N_Md_Md_1_image(out)               # shape (N, M*d, M*d, 1)
+        cov1_res = self.layer_N_M_d_1_to_N_M_d_C_residual(cov1)     # shape (N, M*d, M*d, C)    get the channel again for attention machanism
+        out = tf.transpose(cov1_res, [0, 3, 1, 2])  # shape (N, C, M*d, M*d)
 
         for l in range(1, self.cov_layers + 1):
             out = getattr(self, f"layer_N_C_d_d_bilinear_attention{l}")(out)
@@ -495,7 +496,7 @@ class layer_N_C_d_d_spd_activation_scaled(tf.keras.layers.Layer):
 
 
 # @tf.function(reduce_retracing=True)
-def data_N_M_d_c_to_cov_N_c_d_d_image(input):
+def data_N_M_d_c_to_cov_N_Md_Md_1_image(input):
     """
     Convert input tensors of shape (N, M, d ,C) to covariance matrices of shape (N, M*d, M*d, 1).
     (Reference GitHub: https://github.com/d-acharya/CovPoolFER/blob/master/conv_feature_pooling/src/models/covpoolnet.py)

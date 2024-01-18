@@ -15,7 +15,7 @@ start_time = time.time()
 tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
 
-model = cl.model_attention_final(n_channels_main=5, data_layers=1, cov_layers=3, inner_channels=5, N_exp=3,
+model = cl.model_attention_final(n_channels_main=5, data_layers=3, cov_layers=10, inner_channels=5, N_exp=3,
                                  N_heads=5)
 
 # inputs = tf.keras.Input((None, None))
@@ -57,10 +57,10 @@ lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
 #     genC.DataGeneratorChebyshev(N, M_min, M_max, d_min, d_max),
 #     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler], verbose=True)
 
-# spe = 128
-# ep = 1000
-spe = 3
-ep = 30
+spe = 128
+ep = 1000
+# spe = 3
+# ep = 30
 
 # pixels, emotion = generator_image.load_image('./dataset/train.csv')
 train_folder = './dataset/fer2013/train'
@@ -74,12 +74,20 @@ val_labels_list, val_names = data_loader.load_label(val_csv_folder)
 # create a gradient viewer callback
 gradient_callback = hg.GradientCallback(generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=20))
 
+# create a tensorboard callback
+# to open the tensorboard, in the terminal: tensorboard --logdir=logs
+tensorboard_callback = tf.keras.callbacks.TensorBoard(
+    log_dir="logs",
+    histogram_freq=1,
+    update_freq='batch',
+)
+
 modell.summary()
 
 history = modell.fit(
     generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=20),
     validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=20),
-    epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler, gradient_callback], verbose=True)
+    epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler, gradient_callback, tensorboard_callback], verbose=True)
 
 end_time = time.time()
 
