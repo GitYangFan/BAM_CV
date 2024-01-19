@@ -15,7 +15,7 @@ start_time = time.time()
 tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
 
-model = cl.model_attention_final(n_channels_main=5, data_layers=3, cov_layers=10, inner_channels=5, N_exp=3,
+model = cl.model_attention_final(n_channels_main=100, data_layers=3, cov_layers=10, inner_channels=5, N_exp=3,
                                  N_heads=5)
 
 # inputs = tf.keras.Input((None, None))
@@ -34,7 +34,7 @@ modell = tf.keras.Model(inputs, outputs)
 
 modell.compile(
     loss='categorical_crossentropy',  # Use the default categorical cross-entropy loss function
-    optimizer=tf.keras.optimizers.Adam(clipnorm=1, learning_rate=0.001),
+    optimizer=tf.keras.optimizers.Adam(clipnorm=1, learning_rate=0.0001),
     metrics=['accuracy']
 )
 
@@ -57,10 +57,10 @@ lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
 #     genC.DataGeneratorChebyshev(N, M_min, M_max, d_min, d_max),
 #     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler], verbose=True)
 
-spe = 128
-ep = 1000
-# spe = 3
-# ep = 30
+# spe = 128
+# ep = 1000
+spe = 30
+ep = 500
 
 # pixels, emotion = generator_image.load_image('./dataset/train.csv')
 train_folder = './dataset/fer2013/train'

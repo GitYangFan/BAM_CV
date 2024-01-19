@@ -42,7 +42,7 @@ class model_attention_final(tf.keras.Model):
             setattr(self, f"layer_N_C_d_d_spd_activation{l}",
                     layer_N_C_d_d_spd_activation_scaled(N_exp=self.N_exp))
         self.layer_N_c_d_d_to_N_d_d_3_softmax = layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2()
-        self.layer_N_M_d_1_to_N_x_x_C_conv = layer_N_M_d_1_to_N_x_x_C_conv(num_conv_layers=2, num_filters=10)
+        self.layer_N_M_d_1_to_N_x_x_C_conv = layer_N_M_d_1_to_N_x_x_C_conv(num_conv_layers=1, num_filters=self.n_channels_main)
 
     def call(self, inputs, **kwargs):
         M = tf.shape(inputs)[1]
@@ -63,13 +63,14 @@ class model_attention_final(tf.keras.Model):
         # Let some original image features be mixed with the covariance matrix
         image_representation = out  # shape (N, M, d, C)
         weight = 0
+
         # compute the covariance matrices
         # cov1 = data_N_M_d_c_to_cov_N_c_d_d(out)
 
         out = self.layer_N_M_d_1_to_N_x_x_C_conv(out)  # reduce the complexity
-        cov1 = data_N_M_d_c_to_cov_N_Md_Md_1_image(out)               # shape (N, M*d, M*d, 1)
-        cov1_res = self.layer_N_M_d_1_to_N_M_d_C_residual(cov1)     # shape (N, M*d, M*d, C)    get the channel again for attention machanism
-        out = tf.transpose(cov1_res, [0, 3, 1, 2])  # shape (N, C, M*d, M*d)
+        cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(out, self.N_heads)               # shape (N, C2, C1, C1)
+        out = cov1
+        # cov1_res = self.layer_N_M_d_1_to_N_M_d_C_residual(cov1)     # shape (N, M*d, M*d, C)    get the channel again for attention machanism
 
         for l in range(1, self.cov_layers + 1):
             out = getattr(self, f"layer_N_C_d_d_bilinear_attention{l}")(out)
@@ -106,7 +107,7 @@ class layer_N_M_d_1_to_N_x_x_C_conv(tf.keras.Model):  # reduce the complexity of
 
         for _ in range(num_conv_layers):
             # add one convolution layer
-            conv_layer = tf.keras.layers.Conv2D(filters=num_filters, kernel_size=(3, 3), strides=(2, 2), padding='same',
+            conv_layer = tf.keras.layers.Conv2D(filters=num_filters, kernel_size=(2, 2), strides=(2, 2), padding='same',
                                                 activation=None)
             self.conv_layers.append(conv_layer)
             self.conv_layers.append(tf.keras.layers.Activation('relu'))
@@ -496,43 +497,41 @@ class layer_N_C_d_d_spd_activation_scaled(tf.keras.layers.Layer):
 
 
 # @tf.function(reduce_retracing=True)
-def data_N_M_d_c_to_cov_N_Md_Md_1_image(input):
+def data_N_M_d_c_to_cov_N_C2_C1_C1_image(input, N_heads):
     """
-    Convert input tensors of shape (N, M, d ,C) to covariance matrices of shape (N, M*d, M*d, 1).
+    Convert input tensors of shape (N, M, d ,C) to covariance matrices of shape (N, C2, C1, C1).
     (Reference GitHub: https://github.com/d-acharya/CovPoolFER/blob/master/conv_feature_pooling/src/models/covpoolnet.py)
 
     Args:
         input: (tf.Tensor): Input tensor of shape (N, M, d, C).
 
     Returns:
-        tf.Tensor: Covariance matrices of shape (N, M*d, M*d, 1).
+        tf.Tensor: Covariance matrices of shape (N, C2, C1, C1).
 
     """
     # first flatten to (N,M*d,C)
     features = tf.reshape(input,
-                          shape=(-1, tf.shape(input)[1] * tf.shape(input)[2], tf.shape(input)[3]))  # shape (N, M*d, C)
+                          shape=(-1, tf.shape(input)[1] * tf.shape(input)[2], tf.shape(input)[3] // N_heads, N_heads))  # shape (N, M*d, C1, C2)
+    features = tf.transpose(features, [0, 3, 2, 1])    # shape (N, C2, C1, M*d)
     # shape_f = features.get_shape().as_list()
     shape_f = tf.shape(features)
     # centers_batch = tf.reduce_mean(features, 1)     # shape (N, 1, C)
-    centers_batch = tf.reduce_mean(tf.transpose(features, [0, 2, 1]), 2)
-    centers_batch = tf.reshape(centers_batch, [shape_f[0], 1, shape_f[2]])  # shape (N, 1, C)
+    centers_batch = tf.reduce_mean(tf.transpose(features, [0, 1, 3, 2]), 3)
+    centers_batch = tf.reshape(centers_batch, [shape_f[0], shape_f[1], 1, shape_f[3]])  # shape (N, C2, 1, M*d)
     # centers_batch = tf.expand_dims(centers_batch, axis=1)
     centers_batch = tf.tile(centers_batch,
-                            [1, shape_f[1], 1])  # copy center batch to each feature/pixel shape (N, M*d, C)
-    # compute the covariance matrices with the shape of (N, M*d, M*d)
-    tmp = tf.subtract(features, centers_batch)
-    tmp_t = tf.transpose(tmp, [0, 2, 1])
-    cov = 1 / tf.cast((shape_f[1] - 1), tf.float32) * tf.matmul(tmp, tmp_t)
+                            [1, 1, shape_f[2], 1])  # copy center batch to each feature/pixel shape (N, C2, C1, M*d)
+    # compute the covariance matrices with the shape of (N, C2, C1, C1)
+    tmp = tf.subtract(features, centers_batch)      # shape (N, C2, C1, M*d)
+    tmp_t = tf.transpose(tmp, [0, 1, 3, 2])         # shape (N, C2, M*d, C1)
+    cov = 1 / tf.cast((shape_f[1] - 1), tf.float32) * tf.matmul(tmp, tmp_t)         # shape (N, C2, C1, C1)
     # Add trace on the cov to ensures the positive definite and prevents numerical instability
     trace_t = tf.linalg.trace(cov)
-    trace_t = tf.reshape(trace_t, [shape_f[0], 1])
-    trace_t = tf.tile(trace_t, [1, shape_f[1]])
+    trace_t = tf.reshape(trace_t, [shape_f[0], shape_f[1], 1])
+    trace_t = tf.tile(trace_t, [1, 1, shape_f[2]])
     trace_t = 0.0001 * tf.linalg.diag(trace_t)  # multiply small weight 0.0001
-    cov_trace = tf.add(cov, trace_t)  # shape (N, M*d, M*d)
-    # Dimension extension of cov for further layers
-    cov_trace_expanded = tf.expand_dims(cov_trace, axis=3)  # shape (N, M*d, M*d, 1)
-    # print('cov_trace_expanded:', cov_trace_expanded)
-    return cov_trace_expanded
+    cov_trace = tf.add(cov, trace_t)  # shape (N, C2, C1, C1)
+    return cov_trace
 
 
 def data_N_M_d_c_to_cov_N_c_d_d(inputs):
