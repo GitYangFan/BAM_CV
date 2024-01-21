@@ -42,7 +42,7 @@ class model_attention_final(tf.keras.Model):
             setattr(self, f"layer_N_C_d_d_spd_activation{l}",
                     layer_N_C_d_d_spd_activation_scaled(N_exp=self.N_exp))
         self.layer_N_c_d_d_to_N_d_d_3_softmax = layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2()
-        self.layer_N_M_d_1_to_N_x_x_C_conv = layer_N_M_d_1_to_N_x_x_C_conv(num_conv_layers=1, num_filters=self.n_channels_main)
+        self.layer_N_M_d_1_to_N_x_x_C_conv = layer_N_M_d_1_to_N_x_x_C_conv(out_filters=self.n_channels_main)
 
     def call(self, inputs, **kwargs):
         M = tf.shape(inputs)[1]
@@ -53,6 +53,7 @@ class model_attention_final(tf.keras.Model):
         # compute the covariance matrices here
         # cov1 = data_N_M_d_c_to_cov_N_Md_Md_1_image(o1_conv)
 
+        # residual layer with pre attention (Temporarily skip)
         o2 = self.layer_N_M_d_1_to_N_M_d_C_residual(o1)
         out = o2
         for l in range(1, self.data_layers + 1):
@@ -67,9 +68,10 @@ class model_attention_final(tf.keras.Model):
         # compute the covariance matrices
         # cov1 = data_N_M_d_c_to_cov_N_c_d_d(out)
 
-        out = self.layer_N_M_d_1_to_N_x_x_C_conv(out)  # reduce the complexity
-        cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(out, self.N_heads)               # shape (N, C2, C1, C1)
-        out = cov1
+        out = self.layer_N_M_d_1_to_N_x_x_C_conv(o1)  # reduce the complexity       # shape (N, k, k, C)
+        out = tf.transpose(out, [0, 3, 1, 2])           # shape (N, C, k, k)
+        # cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(out, self.N_heads)      # shape (N, C2, C1, C1)    C2 = N_heads
+        # out = cov1
         # cov1_res = self.layer_N_M_d_1_to_N_M_d_C_residual(cov1)     # shape (N, M*d, M*d, C)    get the channel again for attention machanism
 
         for l in range(1, self.cov_layers + 1):
@@ -101,17 +103,22 @@ class model_attention_final(tf.keras.Model):
 
 
 class layer_N_M_d_1_to_N_x_x_C_conv(tf.keras.Model):  # reduce the complexity of img
-    def __init__(self, num_conv_layers=2, num_filters=5):
+    def __init__(self, out_filters=100):
         super(layer_N_M_d_1_to_N_x_x_C_conv, self).__init__()
         self.conv_layers = []
 
-        for _ in range(num_conv_layers):
-            # add one convolution layer
-            conv_layer = tf.keras.layers.Conv2D(filters=num_filters, kernel_size=(2, 2), strides=(2, 2), padding='same',
-                                                activation=None)
-            self.conv_layers.append(conv_layer)
-            self.conv_layers.append(tf.keras.layers.Activation('relu'))
-            self.conv_layers.append(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
+        # add one convolution layer
+        self.conv_layers.append(tf.keras.layers.Conv2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
+        self.conv_layers.append(tf.keras.layers.Activation('relu'))
+        self.conv_layers.append(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
+
+        self.conv_layers.append(tf.keras.layers.Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
+        self.conv_layers.append(tf.keras.layers.Activation('relu'))
+        self.conv_layers.append(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
+
+        self.conv_layers.append(tf.keras.layers.Conv2D(filters=out_filters, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
+        self.conv_layers.append(tf.keras.layers.Activation('relu'))
+        self.conv_layers.append(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
 
         # combine the conv layers together
         self.model = tf.keras.Sequential(self.conv_layers)

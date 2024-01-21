@@ -87,7 +87,7 @@ def load_img(folder, img_names, start, end):
     dot_idx = img_names[0].rfind('.')
     first_img_idx = int(img_names[0][:dot_idx])
     # add the first img number to the start and end
-    print('\nloading image in the range of:', start+first_img_idx, 'to', end+first_img_idx)
+    # print('\nloading image in the range of:', start+first_img_idx, 'to', end+first_img_idx-1)
     for i in range(start+first_img_idx, end+first_img_idx):
         img_name = "{}.jpg".format(i)
         img_path = os.path.join(folder, img_name)

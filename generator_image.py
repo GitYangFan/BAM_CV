@@ -26,7 +26,7 @@ class DataGenerator_image(tf.keras.utils.Sequence):
         # self.indexes = np.arange(len(self.pixels))
 
     def __len__(self):
-        return int(np.ceil(self.total_size / self.batch_size))
+        return int(np.ceil(self.total_size / self.batch_size)-1)
 
     def __getitem__(self, index):
         start = index * self.batch_size
@@ -35,7 +35,7 @@ class DataGenerator_image(tf.keras.utils.Sequence):
         # print('0 index is:', self.pixels[0])
         # print('batch size:', len(batch_pixels))
         batch_pixels = data_loader.load_img(self.folder, self.img_names, start, end)
-        print('current data index is:', start)
+        # print('current data index is:', start)
         # check if there is enough img in the batch
         if len(batch_pixels) != self.batch_size:
             print('there is no enough data, data index is:', start)
@@ -63,8 +63,8 @@ class DataGenerator_image(tf.keras.utils.Sequence):
         # combine the pixels with emotion
         # samples = (tensor_labels, tensor_pixels)
         samples = (tensor_pixels, tensor_labels)
-        print(samples[0].shape)
-        print(samples[1].shape)
+        # print(samples[0].shape)
+        # print(samples[1].shape)
 
         return samples
 

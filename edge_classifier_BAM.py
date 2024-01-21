@@ -15,7 +15,7 @@ start_time = time.time()
 tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
 
-model = cl.model_attention_final(n_channels_main=100, data_layers=3, cov_layers=10, inner_channels=5, N_exp=3,
+model = cl.model_attention_final(n_channels_main=100, data_layers=3, cov_layers=3, inner_channels=5, N_exp=3,
                                  N_heads=5)
 
 # inputs = tf.keras.Input((None, None))
@@ -34,7 +34,7 @@ modell = tf.keras.Model(inputs, outputs)
 
 modell.compile(
     loss='categorical_crossentropy',  # Use the default categorical cross-entropy loss function
-    optimizer=tf.keras.optimizers.Adam(clipnorm=1, learning_rate=0.0001),
+    optimizer=tf.keras.optimizers.Adam(clipnorm=1, learning_rate=0.001),
     metrics=['accuracy']
 )
 
@@ -59,20 +59,24 @@ lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
 
 # spe = 128
 # ep = 1000
-spe = 30
-ep = 500
+spe = 10
+ep = 50
 
 # pixels, emotion = generator_image.load_image('./dataset/train.csv')
 train_folder = './dataset/fer2013/train'
 train_csv_folder = './dataset/fer2013/train_label.csv'
 train_labels_list, train_names = data_loader.load_label(train_csv_folder)
 
-val_folder = './dataset/fer2013/train_debug'
-val_csv_folder = './dataset/fer2013/train_label_debug.csv'
+val_folder = './dataset/fer2013/val'
+val_csv_folder = './dataset/fer2013/val_label.csv'
 val_labels_list, val_names = data_loader.load_label(val_csv_folder)
 
+debug_folder = './dataset/fer2013/train_debug'
+debug_csv_folder = './dataset/fer2013/train_label_debug.csv'
+debug_labels_list, debug_names = data_loader.load_label(debug_csv_folder)
+
 # create a gradient viewer callback
-gradient_callback = hg.GradientCallback(generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=20))
+gradient_callback = hg.GradientCallback(generator_image.DataGenerator_image(debug_folder, debug_csv_folder, debug_names, batch_size=21))
 
 # create a tensorboard callback
 # to open the tensorboard, in the terminal: tensorboard --logdir=logs
@@ -85,9 +89,9 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(
 modell.summary()
 
 history = modell.fit(
-    generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=20),
-    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=20),
-    epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler, gradient_callback, tensorboard_callback], verbose=True)
+    generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=32),
+    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=32),
+    epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler, tensorboard_callback], verbose=True)
 
 end_time = time.time()
 
