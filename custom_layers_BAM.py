@@ -68,7 +68,7 @@ class model_attention_final(tf.keras.Model):
         # compute the covariance matrices
         # cov1 = data_N_M_d_c_to_cov_N_c_d_d(out)
 
-        out = self.layer_N_M_d_1_to_N_x_x_C_conv(o1)  # reduce the complexity       # shape (N, k, k, C)
+        out = self.layer_N_M_d_1_to_N_x_x_C_conv(out)  # reduce the complexity       # shape (N, k, k, C)
         out = tf.transpose(out, [0, 3, 1, 2])           # shape (N, C, k, k)
         # cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(out, self.N_heads)      # shape (N, C2, C1, C1)    C2 = N_heads
         # out = cov1

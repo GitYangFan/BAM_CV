@@ -34,7 +34,7 @@ modell = tf.keras.Model(inputs, outputs)
 
 modell.compile(
     loss='categorical_crossentropy',  # Use the default categorical cross-entropy loss function
-    optimizer=tf.keras.optimizers.Adam(clipnorm=1, learning_rate=0.0001),
+    optimizer=tf.keras.optimizers.Adam(clipnorm=1, learning_rate=0.001),
     metrics=['accuracy']
 )
 
@@ -60,7 +60,7 @@ lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
 # spe = 128
 # ep = 1000
 spe = 128
-ep = 500
+ep = 100
 
 # pixels, emotion = generator_image.load_image('./dataset/train.csv')
 train_folder = './dataset/fer2013/train'
