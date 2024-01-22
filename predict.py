@@ -55,10 +55,10 @@ ddtype = tf.float32
 model = tf.keras.models.load_model('./BAM.hd5')
 
 # pixels, classes_true = data_loader.load_test_set('./dataset/test_short.csv')
-# img_folder = './dataset/fer2013/train_debug'
-# csv_folder = './dataset/fer2013/train_label_debug.csv'
-img_folder = './dataset/fer2013/test'
-csv_folder = './dataset/fer2013/test_label.csv'
+img_folder = './dataset/fer2013/train_debug'
+csv_folder = './dataset/fer2013/train_label_debug.csv'
+# img_folder = './dataset/fer2013/test'
+# csv_folder = './dataset/fer2013/test_label.csv'
 classes_true, names = data_loader.load_label(csv_folder)
 pixels = data_loader.load_img(img_folder, names, 0, len(classes_true))
 classes_pred = []
@@ -89,7 +89,7 @@ for prediction in predictions:
 #     classes_pred.append(predicted_class)
 
 print('classes_pred:', classes_pred)
-print('class_true:', classes_true)
+print('classes_true:', classes_true)
 
 # predictions = model.predict(pixels)
 
