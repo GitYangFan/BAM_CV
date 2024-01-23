@@ -49,9 +49,10 @@ class model_attention_final(tf.keras.Model):
         o1 = tf.expand_dims(inputs, 3)
 
         # use the convolution layers to reduce the complexity
-        # o1_conv = self.layer_N_M_d_1_to_N_x_x_C_conv(o1)
-        # compute the covariance matrices here
-        # cov1 = data_N_M_d_c_to_cov_N_Md_Md_1_image(o1_conv)
+        # conv1 = self.layer_N_M_d_1_to_N_x_x_C_conv(o1)              # shape (N, k, k, C)
+        # # compute the covariance matrices here
+        # cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(conv1, 1)       # shape (N, 1, C, C)
+        # cov1 = tf.transpose(cov1, [0, 2, 3, 1])  # shape (N, C, C, 1)
 
         # residual layer with pre attention (Temporarily skip)
         o2 = self.layer_N_M_d_1_to_N_M_d_C_residual(o1)
@@ -62,16 +63,23 @@ class model_attention_final(tf.keras.Model):
             out = getattr(self, f"layer_channels_dense_res_N_M_d_c{l}")(out)
 
         # Let some original image features be mixed with the covariance matrix
-        image_representation = out  # shape (N, M, d, C)
-        weight = 0
+        # image_representation = out  # shape (N, M, d, C)
+        weight = 0.1
 
         # compute the covariance matrices
         # cov1 = data_N_M_d_c_to_cov_N_c_d_d(out)
 
-        out = self.layer_N_M_d_1_to_N_x_x_C_conv(out)  # reduce the complexity       # shape (N, k, k, C)
-        out = tf.transpose(out, [0, 3, 1, 2])           # shape (N, C, k, k)
-        # cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(out, self.N_heads)      # shape (N, C2, C1, C1)    C2 = N_heads
-        # out = cov1
+        conv1 = self.layer_N_M_d_1_to_N_x_x_C_conv(out)  # reduce the complexity       # shape (N, k, k, C)
+        cov1 = tf.transpose(conv1, [0, 3, 1, 2])           # shape (N, C, k, k)
+
+        # cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(conv1, self.N_heads)      # shape (N, C2, C1, C1)    C2 = N_heads
+
+        # cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(conv1, 1)      # shape (N, 1, C, C)
+        # cov1 = tf.transpose(cov1, [0, 2, 3, 1])  # shape (N, C, C, 1)
+        # cov1 = tf.tile(cov1,[1, tf.shape(cov1), 1, 1])
+
+        out = cov1
+
         # cov1_res = self.layer_N_M_d_1_to_N_M_d_C_residual(cov1)     # shape (N, M*d, M*d, C)    get the channel again for attention machanism
 
         for l in range(1, self.cov_layers + 1):
