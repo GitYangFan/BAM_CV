@@ -72,7 +72,7 @@ class model_attention_final(tf.keras.Model):
         conv1 = self.layer_N_M_d_1_to_N_x_x_C_conv(out)  # reduce the complexity       # shape (N, k, k, C)
         cov1 = tf.transpose(conv1, [0, 3, 1, 2])           # shape (N, C, k, k)
 
-        # cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(conv1, self.N_heads)      # shape (N, C2, C1, C1)    C2 = N_heads
+        # cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(conv1, 2*self.N_heads)      # shape (N, C2, C1, C1)    C2 = N_heads
 
         # cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(conv1, 1)      # shape (N, 1, C, C)
         # cov1 = tf.transpose(cov1, [0, 2, 3, 1])  # shape (N, C, C, 1)
@@ -116,9 +116,9 @@ class layer_N_M_d_1_to_N_x_x_C_conv(tf.keras.Model):  # reduce the complexity of
         self.conv_layers = []
 
         # add one convolution layer
-        self.conv_layers.append(tf.keras.layers.Conv2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
-        self.conv_layers.append(tf.keras.layers.Activation('relu'))
-        self.conv_layers.append(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
+        # self.conv_layers.append(tf.keras.layers.Conv2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
+        # self.conv_layers.append(tf.keras.layers.Activation('relu'))
+        # self.conv_layers.append(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
 
         self.conv_layers.append(tf.keras.layers.Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
         self.conv_layers.append(tf.keras.layers.Activation('relu'))

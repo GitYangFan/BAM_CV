@@ -55,10 +55,27 @@ ddtype = tf.float32
 model = tf.keras.models.load_model('./BAM.hd5')
 
 # pixels, classes_true = data_loader.load_test_set('./dataset/test_short.csv')
-img_folder = './dataset/fer2013/train_debug'
-csv_folder = './dataset/fer2013/train_label_debug.csv'
-# img_folder = './dataset/fer2013/test'
-# csv_folder = './dataset/fer2013/test_label.csv'
+
+
+# the switch function for selecting test dataset
+def switch_data(case_value):
+    if case_value == 1:
+        img_folder = './dataset/fer2013/train'
+        csv_folder = './dataset/fer2013/train_label.csv'
+    elif case_value == 2:
+        img_folder = './dataset/fer2013/val'
+        csv_folder = './dataset/fer2013/val_label.csv'
+    elif case_value == 3:
+        img_folder = './dataset/fer2013/test'
+        csv_folder = './dataset/fer2013/test_label.csv'
+    else:
+        img_folder = './dataset/fer2013/train_debug'
+        csv_folder = './dataset/fer2013/train_label_debug.csv'
+    return img_folder, csv_folder
+
+
+img_folder, csv_folder = switch_data(3)
+
 classes_true, names = data_loader.load_label(csv_folder)
 pixels = data_loader.load_img(img_folder, names, 0, len(classes_true))
 classes_pred = []
@@ -68,7 +85,7 @@ image_height, image_width = 48, 48
 pixels_array = pixels_array.reshape((len(pixels_array), image_height, image_width))
 predictions = model.predict(pixels_array)
 for prediction in predictions:
-    predicted_class = np.argmax(prediction)    # find the most possible class for each image
+    predicted_class = np.argmax(prediction)  # find the most possible class for each image
     print('possibility:', prediction, 'class:', predicted_class)
     classes_pred.append(predicted_class)
 
@@ -110,5 +127,3 @@ plt.ylabel('Actual')
 plt.xlabel('Predicted')
 plt.title('Confusion Matrix')
 plt.show()
-
-
