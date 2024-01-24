@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
@@ -62,25 +63,27 @@ class model_attention_final(tf.keras.Model):
             out = getattr(self, f"layer_attention_samples_for_each_feature{l}")(out)
             out = getattr(self, f"layer_channels_dense_res_N_M_d_c{l}")(out)
 
-        # Let some original image features be mixed with the covariance matrix
-        # image_representation = out  # shape (N, M, d, C)
-        weight = 0.1
 
         # compute the covariance matrices
         # cov1 = data_N_M_d_c_to_cov_N_c_d_d(out)
 
         conv1 = self.layer_N_M_d_1_to_N_x_x_C_conv(out)  # reduce the complexity       # shape (N, k, k, C)
-        cov1 = tf.transpose(conv1, [0, 3, 1, 2])           # shape (N, C, k, k)
+        conv1_t = tf.transpose(conv1, [0, 3, 1, 2])           # shape (N, C, k, k)
 
-        # cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(conv1, 2*self.N_heads)      # shape (N, C2, C1, C1)    C2 = N_heads
+        C2 = self.N_heads
+        cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(conv1, C2)      # shape (N, C2, C1, C1)    C2 = N_heads
 
-        # cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(conv1, 1)      # shape (N, 1, C, C)
-        # cov1 = tf.transpose(cov1, [0, 2, 3, 1])  # shape (N, C, C, 1)
-        # cov1 = tf.tile(cov1,[1, tf.shape(cov1), 1, 1])
+        # Let some original image features be mixed with the covariance matrix
+        random_channel_idx = np.random.choice(self.n_channels_main, size=C2, replace=False)  # random down sampling
+        img_features = tf.gather(conv1_t, indices=random_channel_idx, axis=1)      # shape (N, C2, k, k)
+        padding_height = cov1.shape[2] - 6      # img_features.shape[2] = 6
+        padding_width = cov1.shape[3] - 6       # img_features.shape[3] = 6
+        img_features_padding = tf.pad(img_features, paddings=[(0, 0), (0, 0), (0, padding_height), (0, padding_width)])  # shape (N, C2, C1, C1)
+        weight = 10
 
-        out = cov1
-
-        # cov1_res = self.layer_N_M_d_1_to_N_M_d_C_residual(cov1)     # shape (N, M*d, M*d, C)    get the channel again for attention machanism
+        # out = cov1 + weight * img_features_padding      # shape (N, C2, C1, C1)
+        out = conv1_t       # shape (N, C, k, k)
+        # out = cov1        # shape (N, C2, C1, C1)
 
         for l in range(1, self.cov_layers + 1):
             out = getattr(self, f"layer_N_C_d_d_bilinear_attention{l}")(out)
@@ -116,9 +119,9 @@ class layer_N_M_d_1_to_N_x_x_C_conv(tf.keras.Model):  # reduce the complexity of
         self.conv_layers = []
 
         # add one convolution layer
-        # self.conv_layers.append(tf.keras.layers.Conv2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
-        # self.conv_layers.append(tf.keras.layers.Activation('relu'))
-        # self.conv_layers.append(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
+        self.conv_layers.append(tf.keras.layers.Conv2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
+        self.conv_layers.append(tf.keras.layers.Activation('relu'))
+        self.conv_layers.append(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
 
         self.conv_layers.append(tf.keras.layers.Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
         self.conv_layers.append(tf.keras.layers.Activation('relu'))
