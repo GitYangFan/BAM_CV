@@ -61,7 +61,7 @@ def preprocessing(img_gray_array, standard_size):
     centered_data = img_vector - mean
     cov_matrix = np.cov(centered_data, rowvar=False)
 
-    return cov_matrix
+    return img_preprocessing
 
 
 def main():
