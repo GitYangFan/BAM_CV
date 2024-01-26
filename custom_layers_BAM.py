@@ -74,7 +74,7 @@ class model_attention_final(tf.keras.Model):
 
         out = conv1_t  # model1: pure CNN - shape (N, C, k, k)
         out = cov1  # model2: covariance matrix - shape (N, C2, C1, C1)
-        out = feature_fusion(conv1_t, cov1)  # model3: feature fusion of 1 and 2 - shape (N, C+C2, k, k)
+        out = feature_fusion(conv1_t, cov1, weight2=0.1)  # model3: feature fusion of 1 and 2 - shape (N, C+C2, k, k)
 
         for l in range(1, self.cov_layers + 1):
             out = getattr(self, f"layer_N_C_d_d_bilinear_attention{l}")(out)
@@ -103,7 +103,7 @@ class model_attention_final(tf.keras.Model):
         return cls(**config)
 
 
-def feature_fusion(tensor1, tensor2):
+def feature_fusion(tensor1, tensor2, weight2=1.0):
     """
     This function is aimed to fusion the first and second dimension features...
     combine two tensors with different shapes (N, C, k, k) and (N, C2, C1, C1)
@@ -115,7 +115,7 @@ def feature_fusion(tensor1, tensor2):
     # shape1 = tensor1_t.shape
     shape1 = tf.shape(tensor1_t)
     tensor2_resize = tf.image.resize(tensor2_t, (shape1[1], shape1[2]))  # shape (N, k, k, C2)
-    feature_combined = tf.concat([tensor1_t, tensor2_resize], axis=-1)  # shape (N, k, k, C+C2)
+    feature_combined = tf.concat([tensor1_t, tensor2_resize * weight2], axis=-1)  # shape (N, k, k, C+C2)
     feature_combined_t = tf.transpose(feature_combined, [0, 3, 1, 2])
     return feature_combined_t
 

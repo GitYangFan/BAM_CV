@@ -74,7 +74,7 @@ def switch_data(case_value):
     return img_folder, csv_folder
 
 
-img_folder, csv_folder = switch_data(3)
+img_folder, csv_folder = switch_data(1)
 
 classes_true, names = data_loader.load_label(csv_folder)
 pixels = data_loader.load_img(img_folder, names, 0, len(classes_true))
