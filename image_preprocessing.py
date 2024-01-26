@@ -1,6 +1,7 @@
 import os
 import pdb
 import pandas as pd
+
 import generator_cheby_BAM as genC
 # import generator_image as genImage
 import matplotlib.pyplot as plt
@@ -54,13 +55,6 @@ def preprocessing(img_gray_array, standard_size):
     img_preprocessing = tf.image.per_image_standardization(img_preprocessing)
     img_preprocessing = tf.squeeze(img_preprocessing, 2)
 
-    # calculate the covariance matrix
-    # img_flattened = tf.reshape(img_preprocessing, (-1, 1))    # flatten the image(abandon because error)
-    img_vector = img_preprocessing.numpy()
-    mean = np.mean(img_vector)
-    centered_data = img_vector - mean
-    cov_matrix = np.cov(centered_data, rowvar=False)
-
     return img_preprocessing
 
 
@@ -68,14 +62,12 @@ def main():
     emotions = []
     pixels = []
 
-    # load the dataset
-    csv_file_path = './dataset/train_short.csv'
-    dataset = pd.read_csv(csv_file_path)
-
-    for index, row in dataset.iterrows():
-        emotions.append(row['emotion'])
-        pixels.append(row['pixels'])
-        # usage.append(row['Usage'])
+    train_folder = './dataset/fer2013/train'
+    train_csv_folder = './dataset/fer2013/train_label.csv'
+    pixels, train_names = data_loader.load_label(train_csv_folder)
+    start = 0
+    end = 30
+    pixels = data_loader.load_img(train_folder, train_names, start, end)
 
     # show a sample
     idx = random.randint(1, len(emotions) - 25)

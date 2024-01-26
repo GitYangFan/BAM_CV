@@ -65,6 +65,7 @@ def load_label(csv_folder):
     img_name = []
     for index, row in data.iterrows():
         labels_list.append(row['emotion'])
+        # labels_list.append(row['gender'])
         img_name.append(row['file'])
         # if row['gender'] == 'Male':
         #     labels_list.append(0)
@@ -84,12 +85,13 @@ def load_img(folder, img_names, start, end):
     # load the jpg images
     pixels_list = []
     # find the first img number
-    dot_idx = img_names[0].rfind('.')
-    first_img_idx = int(img_names[0][:dot_idx])
+    # dot_idx = img_names[0].rfind('.')
+    # first_img_idx = int(img_names[0][:dot_idx])
     # add the first img number to the start and end
-    # print('\nloading image in the range of:', start+first_img_idx, 'to', end+first_img_idx-1)
-    for i in range(start+first_img_idx, end+first_img_idx):
-        img_name = "{}.jpg".format(i)
+    # for i in range(start+first_img_idx, end+first_img_idx):
+    for i in range(start, end):
+        # img_name = "{}.jpg".format(i)
+        img_name = img_names[i]
         img_path = os.path.join(folder, img_name)
         if os.path.exists(img_path):
             with Image.open(img_path) as img:
@@ -120,17 +122,37 @@ def load_img(folder, img_names, start, end):
     return pixels_list
 
 
+
+def show_image_batch(pixels_batch, label_batch):
+    rows = 4
+    cols = 2
+    idx = 0
+    fig, axes = plt.subplots(rows, 2 * cols, figsize=(8, 8))
+    # show the image
+    for i in range(rows):
+        for j in range(cols):
+            axes[i, 2 * j - 1].imshow(pixels_batch, cmap='gray')
+            axes[i, 2 * j - 1].set_title(label_batch[idx])
+            axes[i, 2 * j - 1].axis('off')
+            idx = idx + 1
+    plt.subplots_adjust(wspace=0.3, hspace=0.3)
+    plt.savefig('sample_img.png')
+
+
+
 """
 -------- test ------------
 """
 # --------- test the image loader ---------
-# train_folder = './dataset/fairface025/train'
-# train_csv_folder = './dataset/fer2013/train_label.csv'
-# _, train_names = load_label(train_csv_folder)
+# train_folder = './dataset/wiki_crop'
+# train_csv_folder = './dataset/wiki_crop/wiki.csv'
+# label_list, train_names = load_label(train_csv_folder)
 # start = 0
 # end = 10
 # pixels_list = load_img(train_folder, train_names, start, end)
 # print('pixels_list:', pixels_list)
+#
+# show_image_batch(pixels_list, label_list)
 
 # --------- test the label loader ---------
 # csv_folder = './dataset/fer2013/train_label.csv'
