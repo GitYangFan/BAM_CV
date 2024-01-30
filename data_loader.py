@@ -67,7 +67,7 @@ def load_label(csv_folder):
         labels_list.append(row['emotion'])
         # labels_list.append(row['gender'])
         img_name.append(row['file'])
-        # if row['gender'] == 'Male':
+        # if row['gender'] == 0:       # 0 for female, 1 for male
         #     labels_list.append(0)
         # else:
         #     labels_list.append(1)

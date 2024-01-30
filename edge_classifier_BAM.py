@@ -59,8 +59,8 @@ lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
 
 # spe = 128
 # ep = 1000
-spe = 30
-ep = 100
+spe = 3
+ep = 10
 
 # pixels, emotion = generator_image.load_image('./dataset/train.csv')
 train_folder = './dataset/fer2013/train'
@@ -86,12 +86,28 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(
     update_freq='batch',
 )
 
+# create a EarlyStopping callback
+early_stopping = tf.keras.callbacks.EarlyStopping(
+    monitor='val_loss',     # monitering the loss on the validation set
+    patience=100,           # stop when the val_loss not decreases in the last 100 epoch
+    restore_best_weights=True
+)
+
+# create a CheckPoint callback
+checkpoint = tf.keras.callbacks.ModelCheckpoint(
+    filepath='./model/BAM_best.hd5',
+    monitor='val_loss',
+    save_best_only=True,
+    mode='min',
+    save_weights_only=False  # True-only save the weights, False-save the whole model
+)
+
 modell.summary()
 
 history = modell.fit(
-    generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=32),
-    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=32),
-    epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler, tensorboard_callback], verbose=True)
+    generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=100),
+    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=10),
+    epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler, tensorboard_callback, early_stopping, checkpoint], verbose=True)
 
 end_time = time.time()
 
@@ -99,7 +115,7 @@ end_time = time.time()
 elapsed_time = end_time - start_time
 # print(modell.variables)
 
-modell.save("BAM.hd5")
+modell.save("./model/BAM_last.hd5")
 np.save("BAM_history", history.history)
 model.save_weights("BAM_weights")
 with open("runtime_BAM.txt", "w") as file:

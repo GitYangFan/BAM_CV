@@ -6,6 +6,7 @@ import tensorflow as tf
 import os
 import pandas as pd
 import data_loader
+import imblearn as imb
 
 
 class DataGenerator_image(tf.keras.utils.Sequence):
@@ -43,25 +44,24 @@ class DataGenerator_image(tf.keras.utils.Sequence):
             start = end - self.batch_size
             batch_pixels = data_loader.load_img(self.folder, self.img_names, start, end)
             print('replacing with the last possible batch with index:', start)
-        batch_labels = one_hot(self.labels[start:end])
+
+        # over sampling or under sampling to balance the batch data
         batch_pixels = np.array(batch_pixels, dtype=np.float32)
+        batch_labels = self.labels[start:end]
+        batch_pixels, batch_labels = over_sampling(batch_pixels, batch_labels, self.batch_size, 7)
+
+        batch_labels = one_hot(batch_labels)
         batch_labels = np.array(batch_labels, dtype=np.int32)
 
         image_height, image_width = 48, 48
         # image_height, image_width = 224, 224
 
-        # batch_pixels = batch_pixels.reshape((self.batch_size, image_height, image_width, 1))
-        batch_pixels = batch_pixels.reshape((self.batch_size, image_height, image_width))
-        # batch_pixels = convert_to_multiple_channels(batch_pixels, 3)  # expand the channel (batch, 48, 48, 3)
-        batch_labels = batch_labels.reshape((self.batch_size, 7))  # there are 7 categories of emotions
-        # batch_labels = batch_labels.reshape((self.batch_size, 7, 1))  # there are 7 categories of emotions
-        # batch_labels = convert_to_multiple_channels(batch_labels, image_height)  # expand the channel (batch, 7, 48)
-        # tensor_pixels = tf.convert_to_tensor(batch_pixels, dtype=tf.float32)
+        batch_pixels = batch_pixels.reshape((-1, image_height, image_width))
+        batch_labels = batch_labels.reshape((-1, 7))  # there are 7 categories of emotions
         tensor_pixels = tf.convert_to_tensor(batch_pixels, dtype=tf.float32)
         tensor_labels = tf.convert_to_tensor(batch_labels, dtype=tf.int32)
 
         # combine the pixels with emotion
-        # samples = (tensor_labels, tensor_pixels)
         samples = (tensor_pixels, tensor_labels)
         # print(samples[0].shape)
         # print(samples[1].shape)
@@ -80,30 +80,26 @@ def convert_to_multiple_channels(batch_pixels, num_channel):
     return three_channel_batch
 
 
-def load_image(image_directory):
-    # current_dir = os.getcwd()
-    # image_directory = os.path.join(current_dir, 'dataset', 'train.csv')
-    dataset = pd.read_csv(image_directory)
-    # print(df)
-    emotion = []
-    pixels = []
-    for index, row in dataset.iterrows():
-        emotion.append(row['emotion'])
-        pixels.append(row['pixels'])
-    pixels_array = []
-    for img in pixels:
-        img_list = img.split()
-        img_array = [int(value) for value in img_list]
-        img_array = np.array(img_array, dtype=np.uint8)
-        # preprocessing
-        image_height, image_width = 48, 48
-        img_array = img_array.reshape(image_height, image_width)
-        img_array_preprocessed = preprocessing(image_height, image_width, img_array)
-        img_array_flattened = tf.reshape(img_array_preprocessed, [-1])
-        # flattening
-        pixels_array.append(img_array_flattened)
-    return pixels_array, emotion
+def over_sampling(pixels, labels, batch_size, num_classes=7):
+    ros = imb.over_sampling.RandomOverSampler(random_state=42)
+    pixels_resampled, labels_resampled = ros.fit_resample(pixels, labels)
+    # limit the number of each class in order to fit the batch size
+    unique_label = np.unique(labels_resampled)
+    max_samples_per_class = batch_size // len(unique_label)
+    samples_to_keep = {label: min(np.sum(labels_resampled == label), max_samples_per_class) for label in unique_label}
+    pixels_resampled_limit, labels_resampled_limit = [], []
+    for x, label in zip(pixels_resampled, labels_resampled):
+        if samples_to_keep[label] > 0:
+            pixels_resampled_limit.append(x)
+            labels_resampled_limit.append(label)
+            samples_to_keep[label] -= 1
+    return np.array(pixels_resampled_limit), np.array(labels_resampled_limit)
 
+
+def under_sampling(pixels, labels):
+    rus = imb.under_sampling.RandomUnderSampler(random_state=42)
+    pixels_resampled, labels_resampled = rus.fit_resample(pixels, labels)
+    return pixels_resampled, labels_resampled
 
 
 # current_dir = os.getcwd()
@@ -126,3 +122,17 @@ def load_image(image_directory):
 # batch_pixels = pixels[start:end]
 # batch_emotion = one_hot(emotion[start:end])
 # print('test finished')
+
+# test the over sampling
+# train_folder = './dataset/fer2013/train'
+# train_csv_folder = './dataset/fer2013/train_label.csv'
+# train_labels_list, train_names = data_loader.load_label(train_csv_folder)
+# generator = DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=32)
+#
+# for i in range(5):
+#     X_batch, y_batch = generator.__getitem__(i)
+#     y_batch_int = np.argmax(y_batch.numpy(), axis=1)
+#     class_counts = {label: np.sum(y_batch_int == label) for label in np.unique(y_batch_int)}
+#     for label, count in class_counts.items():
+#         print(f"Class {label} Count: {count}")
+#     print('---------------------')

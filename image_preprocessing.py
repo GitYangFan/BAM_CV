@@ -10,19 +10,6 @@ import random
 import tensorflow as tf
 from scipy import ndimage
 
-"""
-spe = 128
-ep = 1000
-N = 1
-M_min = 50
-M_max = 1000
-d_min = 10
-d_max = 100
-test = genC.DataGeneratorChebyshev(N=N, M_min=M_min, M_max=M_max, d_min=d_min, d_max=d_max, steps_per_epoch=spe)
-# pdb.set_trace()
-print(test)
-"""
-
 
 def prewhiten(x):
     mean = np.mean(x)
@@ -126,8 +113,5 @@ def main():
     plt.subplots_adjust(wspace=0.3, hspace=0.3)
     plt.show()
 
-
 # if __name__ == '__main__':
 #     main()
-
-
