@@ -15,8 +15,9 @@ start_time = time.time()
 tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
 
+num_class = 2
 model = cl.model_attention_final(n_channels_main=100, data_layers=1, cov_layers=3, inner_channels=5, N_exp=3,
-                                 N_heads=5)
+                                 N_heads=5, num_classes=num_class)
 
 # inputs = tf.keras.Input((None, None))
 inputs = tf.keras.Input((48, 48))
@@ -45,38 +46,35 @@ def scheduler(epoch, lr):
 
 lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
 
-# spe = 1
-# ep = 10
-# N = 1
-# M_min = 1
-# M_max = 10
-# d_min = 10
-# d_max = 100
+
+# # load the data from fer2013 dataset
+# train_folder = './dataset/fer2013/train'
+# train_csv_folder = './dataset/fer2013/train_label.csv'
+# train_labels_list, train_names = data_loader.load_label(train_csv_folder, label='emotion')
 #
-# history = modell.fit(
-#     genC.DataGeneratorChebyshev(N, M_min, M_max, d_min, d_max),
-#     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler], verbose=True)
+# val_folder = './dataset/fer2013/val'
+# val_csv_folder = './dataset/fer2013/val_label.csv'
+# val_labels_list, val_names = data_loader.load_label(val_csv_folder, label='emotion')
+#
+# debug_folder = './dataset/fer2013/train_debug'
+# debug_csv_folder = './dataset/fer2013/train_label_debug.csv'
+# debug_labels_list, debug_names = data_loader.load_label(debug_csv_folder, label='emotion')
 
-# spe = 128
-# ep = 1000
-spe = 3
-ep = 10
+# load the data from wiki dataset
+train_folder = './dataset/wiki_crop/image'
+train_csv_folder = './dataset/wiki_crop/wiki_train.csv'
+train_labels_list, train_names = data_loader.load_label(train_csv_folder, label='gender')
 
-# pixels, emotion = generator_image.load_image('./dataset/train.csv')
-train_folder = './dataset/fer2013/train'
-train_csv_folder = './dataset/fer2013/train_label.csv'
-train_labels_list, train_names = data_loader.load_label(train_csv_folder)
+val_folder = './dataset/wiki_crop/image'
+val_csv_folder = './dataset/wiki_crop/wiki_val.csv'
+val_labels_list, val_names = data_loader.load_label(val_csv_folder, label='gender')
 
-val_folder = './dataset/fer2013/val'
-val_csv_folder = './dataset/fer2013/val_label.csv'
-val_labels_list, val_names = data_loader.load_label(val_csv_folder)
-
-debug_folder = './dataset/fer2013/train_debug'
-debug_csv_folder = './dataset/fer2013/train_label_debug.csv'
-debug_labels_list, debug_names = data_loader.load_label(debug_csv_folder)
+debug_folder = './dataset/wiki_crop/image'
+debug_csv_folder = './dataset/wiki_crop/wiki_test.csv'
+debug_labels_list, debug_names = data_loader.load_label(debug_csv_folder, label='gender')
 
 # create a gradient viewer callback
-gradient_callback = hg.GradientCallback(generator_image.DataGenerator_image(debug_folder, debug_csv_folder, debug_names, batch_size=21))
+gradient_callback = hg.GradientCallback(generator_image.DataGenerator_image(debug_folder, debug_csv_folder, debug_names, batch_size=21, num_classes=num_class))
 
 # create a tensorboard callback
 # to open the tensorboard, in the terminal: tensorboard --logdir=logs
@@ -104,9 +102,14 @@ checkpoint = tf.keras.callbacks.ModelCheckpoint(
 
 modell.summary()
 
+# spe = 128
+# ep = 1000
+spe = 128
+ep = 500
+
 history = modell.fit(
-    generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=100),
-    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=10),
+    generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=50, num_classes=num_class),
+    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=50, num_classes=num_class),
     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler, tensorboard_callback, early_stopping, checkpoint], verbose=True)
 
 end_time = time.time()

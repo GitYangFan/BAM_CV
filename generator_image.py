@@ -10,11 +10,12 @@ import imblearn as imb
 
 
 class DataGenerator_image(tf.keras.utils.Sequence):
-    def __init__(self, folder, labels, img_names, batch_size):
+    def __init__(self, folder, labels, img_names, batch_size, num_classes=7):
         self.folder = folder
         self.labels = labels
         self.batch_size = batch_size
         self.img_names = img_names
+        self.num_classes = num_classes
         # counting the total number of images in the folder
         image_extensions = {'.jpg', '.jpeg', '.png', '.gif'}
         image_count = 0
@@ -22,8 +23,10 @@ class DataGenerator_image(tf.keras.utils.Sequence):
             for file in files:
                 if os.path.splitext(file)[1].lower() in image_extensions:
                     image_count += 1
-        print('image_count:', image_count)
-        self.total_size = image_count
+        label_length = len(self.img_names)
+        print('image_count:', image_count, 'label_length:', label_length)
+        self.total_size = min(image_count, label_length)
+        print('size:', self.total_size)
         # self.indexes = np.arange(len(self.pixels))
 
     def __len__(self):
@@ -48,16 +51,16 @@ class DataGenerator_image(tf.keras.utils.Sequence):
         # over sampling or under sampling to balance the batch data
         batch_pixels = np.array(batch_pixels, dtype=np.float32)
         batch_labels = self.labels[start:end]
-        batch_pixels, batch_labels = over_sampling(batch_pixels, batch_labels, self.batch_size, 7)
+        batch_pixels, batch_labels = over_sampling(batch_pixels, batch_labels, self.batch_size, self.num_classes)
 
-        batch_labels = one_hot(batch_labels)
+        batch_labels = one_hot(batch_labels, self.num_classes)
         batch_labels = np.array(batch_labels, dtype=np.int32)
 
         image_height, image_width = 48, 48
         # image_height, image_width = 224, 224
 
         batch_pixels = batch_pixels.reshape((-1, image_height, image_width))
-        batch_labels = batch_labels.reshape((-1, 7))  # there are 7 categories of emotions
+        batch_labels = batch_labels.reshape((-1, self.num_classes))  # there are 7 categories of emotions
         tensor_pixels = tf.convert_to_tensor(batch_pixels, dtype=tf.float32)
         tensor_labels = tf.convert_to_tensor(batch_labels, dtype=tf.int32)
 
@@ -69,8 +72,8 @@ class DataGenerator_image(tf.keras.utils.Sequence):
         return samples
 
 
-def one_hot(label):
-    one_hot_labels = to_categorical(label, num_classes=7)
+def one_hot(label, num_classes):
+    one_hot_labels = to_categorical(label, num_classes)
     # print(one_hot_labels)
     return one_hot_labels
 

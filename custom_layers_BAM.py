@@ -19,7 +19,7 @@ class model_attention_final(tf.keras.Model):
         N_heads (int): Number of heads for the multi-head attention mechanisms.
     """
 
-    def __init__(self, n_channels_main=10, data_layers=2, cov_layers=4, inner_channels=10, N_exp=3, N_heads=5):
+    def __init__(self, n_channels_main=10, data_layers=2, cov_layers=4, inner_channels=10, N_exp=3, N_heads=5, num_classes=7):
         super(model_attention_final, self).__init__()
         self.data_layers = data_layers
         self.cov_layers = cov_layers
@@ -42,7 +42,7 @@ class model_attention_final(tf.keras.Model):
                     MultiHeadAttention_N_C_d_d_bilinear(num_heads=5))
             setattr(self, f"layer_N_C_d_d_spd_activation{l}",
                     layer_N_C_d_d_spd_activation_scaled(N_exp=self.N_exp))
-        self.layer_N_c_d_d_to_N_d_d_3_softmax = layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2()
+        self.layer_N_c_d_d_to_N_d_d_3_softmax = layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(num_classes)
         self.layer_N_M_d_1_to_N_x_x_C_conv = layer_N_M_d_1_to_N_x_x_C_conv(out_filters=self.n_channels_main)
 
     def call(self, inputs, **kwargs):
@@ -602,9 +602,10 @@ class layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(tf.keras.layers.Layer):
     Applies LogEig layer, calculates probabilities for the 3 output classes
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, num_classes=7, **kwargs):
         super(layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2, self).__init__(**kwargs)
         self.ln_em = tf.keras.layers.LayerNormalization()
+        self.num_classes = num_classes
 
     def build(self, input_shape):
         neurons_in = tf.cast(input_shape[0][1], tf.int32) + 10
@@ -612,7 +613,7 @@ class layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(tf.keras.layers.Layer):
         # print('(neurons_in, 7):', (neurons_in, 7))
         # print('input shape:',input_shape)
         self.w = self.add_weight(
-            shape=(neurons_in, 7),  # the output shape
+            shape=(neurons_in, self.num_classes),  # the output shape
             initializer=tf.keras.initializers.GlorotNormal(),
             trainable=True,
             # constraint=tf.keras.constraints.NonNeg(),

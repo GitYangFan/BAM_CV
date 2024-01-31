@@ -22,21 +22,34 @@ def switch_data(case_value):
     if case_value == 1:
         img_folder = './dataset/fer2013/train'
         csv_folder = './dataset/fer2013/train_label.csv'
+        classes = ['0=Angry', '1=Disgust', '2=Fear', '3=Happy', '4=Sad', '5=Surprise', '6=Neutral']
+        label = 'emotion'
     elif case_value == 2:
         img_folder = './dataset/fer2013/val'
         csv_folder = './dataset/fer2013/val_label.csv'
+        classes = ['0=Angry', '1=Disgust', '2=Fear', '3=Happy', '4=Sad', '5=Surprise', '6=Neutral']
+        label = 'emotion'
     elif case_value == 3:
         img_folder = './dataset/fer2013/test'
         csv_folder = './dataset/fer2013/test_label.csv'
+        classes = ['0=Angry', '1=Disgust', '2=Fear', '3=Happy', '4=Sad', '5=Surprise', '6=Neutral']
+        label = 'emotion'
+    elif case_value == 4:
+        img_folder = './dataset/wiki_crop/image'
+        csv_folder = './dataset/wiki_crop/wiki_test.csv'
+        classes = ['0=female', '1=male']
+        label = 'gender'
     else:
         img_folder = './dataset/fer2013/train_debug'
         csv_folder = './dataset/fer2013/train_label_debug.csv'
-    return img_folder, csv_folder
+        classes = ['0=Angry', '1=Disgust', '2=Fear', '3=Happy', '4=Sad', '5=Surprise', '6=Neutral']
+        label = 'emotion'
+    return img_folder, csv_folder, classes, label
 
 
-img_folder, csv_folder = switch_data(3)
+img_folder, csv_folder, classes, label = switch_data(4)
 
-classes_true, names = data_loader.load_label(csv_folder)
+classes_true, names = data_loader.load_label(csv_folder, label)
 pixels = data_loader.load_img(img_folder, names, 0, len(classes_true))
 classes_pred = []
 
@@ -48,22 +61,6 @@ for prediction in predictions:
     predicted_class = np.argmax(prediction)  # find the most possible class for each image
     print('possibility:', prediction, 'class:', predicted_class)
     classes_pred.append(predicted_class)
-
-# for img in pixels:
-#     img_array = np.array(img, dtype=np.float32)
-#     image_height, image_width = 48, 48
-#     img_array = img_array.reshape((1, image_height, image_width))
-#     prediction = model.predict(img_array)
-#     # prediction_sum = np.sum(prediction, axis=0)     # sum the first dimension of tensor (48,1,7)
-#     predicted_class = np.argmax(prediction[0])    # find the most possible class
-#     print('possibility:', prediction[0])
-#     print('class:', predicted_class)
-#     # predicted_class = np.argmax(prediction[0][0][0])
-#     # print(prediction.shape)
-#     # prediction_flatten = prediction.flatten()
-#     # predicted_class = np.argmax(prediction_flatten)
-#     # print('class:', prediction_flatten[predicted_class])
-#     classes_pred.append(predicted_class)
 
 print('classes_pred:', classes_pred)
 print('classes_true:', classes_true)
@@ -84,7 +81,6 @@ num_class = confusion_matrix.sum(axis=1, keepdims=True)
 print('num_class:', num_class.T)
 confusion_matrix_prop = confusion_matrix / num_class.astype(float)   # compute the proportion of correct predictions for each class
 
-classes = ['0=Angry', '1=Disgust', '2=Fear', '3=Happy', '4=Sad', '5=Surprise', '6=Neutral']
 plt.figure(figsize=(16, 7))
 
 plt.subplot(1, 2, 1)
