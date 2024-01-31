@@ -15,7 +15,7 @@ start_time = time.time()
 tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
 
-num_class = 2
+num_class = 7
 model = cl.model_attention_final(n_channels_main=100, data_layers=1, cov_layers=3, inner_channels=5, N_exp=3,
                                  N_heads=5, num_classes=num_class)
 
@@ -47,7 +47,7 @@ def scheduler(epoch, lr):
 lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
 
 
-# # load the data from fer2013 dataset
+# load the data from fer2013 dataset
 # train_folder = './dataset/fer2013/train'
 # train_csv_folder = './dataset/fer2013/train_label.csv'
 # train_labels_list, train_names = data_loader.load_label(train_csv_folder, label='emotion')
@@ -60,21 +60,26 @@ lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
 # debug_csv_folder = './dataset/fer2013/train_label_debug.csv'
 # debug_labels_list, debug_names = data_loader.load_label(debug_csv_folder, label='emotion')
 
+# load the data from RAF-DB dataset
+train_folder = './dataset/RAF-DB/aligned'
+train_csv_folder = './dataset/RAF-DB/train_label_shuffled_aligned_idx0.csv'
+train_labels_list, train_names = data_loader.load_label(train_csv_folder, label='emotion')
+
+val_folder = './dataset/RAF-DB/aligned'
+val_csv_folder = './dataset/RAF-DB/val_label_shuffled_aligned_idx0.csv'
+val_labels_list, val_names = data_loader.load_label(val_csv_folder, label='emotion')
+
 # load the data from wiki dataset
-train_folder = './dataset/wiki_crop/image'
-train_csv_folder = './dataset/wiki_crop/wiki_train.csv'
-train_labels_list, train_names = data_loader.load_label(train_csv_folder, label='gender')
-
-val_folder = './dataset/wiki_crop/image'
-val_csv_folder = './dataset/wiki_crop/wiki_val.csv'
-val_labels_list, val_names = data_loader.load_label(val_csv_folder, label='gender')
-
-debug_folder = './dataset/wiki_crop/image'
-debug_csv_folder = './dataset/wiki_crop/wiki_test.csv'
-debug_labels_list, debug_names = data_loader.load_label(debug_csv_folder, label='gender')
+# train_folder = './dataset/wiki_crop/image'
+# train_csv_folder = './dataset/wiki_crop/wiki_train.csv'
+# train_labels_list, train_names = data_loader.load_label(train_csv_folder, label='gender')
+#
+# val_folder = './dataset/wiki_crop/image'
+# val_csv_folder = './dataset/wiki_crop/wiki_val.csv'
+# val_labels_list, val_names = data_loader.load_label(val_csv_folder, label='gender')
 
 # create a gradient viewer callback
-gradient_callback = hg.GradientCallback(generator_image.DataGenerator_image(debug_folder, debug_csv_folder, debug_names, batch_size=21, num_classes=num_class))
+# gradient_callback = hg.GradientCallback(generator_image.DataGenerator_image(debug_folder, debug_csv_folder, debug_names, batch_size=21, num_classes=num_class))
 
 # create a tensorboard callback
 # to open the tensorboard, in the terminal: tensorboard --logdir=logs

@@ -39,6 +39,11 @@ def switch_data(case_value):
         csv_folder = './dataset/wiki_crop/wiki_test.csv'
         classes = ['0=female', '1=male']
         label = 'gender'
+    elif case_value == 5:
+        img_folder = './dataset/RAF-DB/aligned'
+        csv_folder = './dataset/RAF-DB/test_label_shuffled_aligned_idx0.csv'
+        classes = ['0=Surprise', '1=Fear', '2=Disgust', '3=Happy', '4=Sad', '5=Angry', '6=Neutral']
+        label = 'emotion'
     else:
         img_folder = './dataset/fer2013/train_debug'
         csv_folder = './dataset/fer2013/train_label_debug.csv'
@@ -47,7 +52,7 @@ def switch_data(case_value):
     return img_folder, csv_folder, classes, label
 
 
-img_folder, csv_folder, classes, label = switch_data(4)
+img_folder, csv_folder, classes, label = switch_data(5)
 
 classes_true, names = data_loader.load_label(csv_folder, label)
 pixels = data_loader.load_img(img_folder, names, 0, len(classes_true))
@@ -58,7 +63,7 @@ image_height, image_width = 48, 48
 pixels_array = pixels_array.reshape((len(pixels_array), image_height, image_width))
 predictions = model.predict(pixels_array)
 for prediction in predictions:
-    predicted_class = np.argmax(prediction)  # find the most possible class for each image
+    predicted_class = np.argmax(prediction)     # find the most possible class for each image
     print('possibility:', prediction, 'class:', predicted_class)
     classes_pred.append(predicted_class)
 
