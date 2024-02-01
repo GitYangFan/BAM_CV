@@ -80,7 +80,7 @@ def get_cov_from_img(img_array):
     return cov_of_img
 
 
-def load_img(folder, img_names, start, end):
+def load_img(folder, img_names, start, end, standard_size):
     # load the jpg images
     pixels_list = []
     # find the first img number
@@ -97,7 +97,7 @@ def load_img(folder, img_names, start, end):
                 # convert to grey image
                 img = img.convert('L')
                 # Scale the image to the standard size 48x48 by downsampling
-                standard_size = (48, 48)
+                # standard_size = (48, 48)
                 img_resized = img.resize(standard_size, Image.LANCZOS)
                 # convert the img to numpy array
                 img_array = np.array(img_resized)

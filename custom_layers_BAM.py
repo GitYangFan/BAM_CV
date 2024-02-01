@@ -39,7 +39,7 @@ class model_attention_final(tf.keras.Model):
                     layer_channels_dense_res_N_M_d_c(inner_channels=self.n_channels_main))
         for l in range(1, self.cov_layers + 1):
             setattr(self, f"layer_N_C_d_d_bilinear_attention{l}",
-                    MultiHeadAttention_N_C_d_d_bilinear(num_heads=5))
+                    MultiHeadAttention_N_C_d_d_bilinear(num_heads=self.N_heads))
             setattr(self, f"layer_N_C_d_d_spd_activation{l}",
                     layer_N_C_d_d_spd_activation_scaled(N_exp=self.N_exp))
         self.layer_N_c_d_d_to_N_d_d_3_softmax = layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(num_classes)
@@ -159,26 +159,38 @@ def data_N_M_d_c_to_cov_N_C2_C1_C1_image(input, N_heads):
 
 
 class layer_N_M_d_1_to_N_x_x_C_conv(tf.keras.Model):  # reduce the complexity of img
-    def __init__(self, out_filters=100):
+    def __init__(self, out_filters=256):
         super(layer_N_M_d_1_to_N_x_x_C_conv, self).__init__()
         self.conv_layers = []
-
-        # add one convolution layer
-        self.conv_layers.append(
-            tf.keras.layers.Conv2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
-        self.conv_layers.append(tf.keras.layers.Activation('relu'))
-        self.conv_layers.append(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
-
+        # define the CNN architecture
+        # 1
         self.conv_layers.append(
             tf.keras.layers.Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
         self.conv_layers.append(tf.keras.layers.Activation('relu'))
         self.conv_layers.append(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
-
+        # 4
+        self.conv_layers.append(
+            tf.keras.layers.Conv2D(filters=96, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
+        self.conv_layers.append(tf.keras.layers.Activation('relu'))
+        self.conv_layers.append(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
+        # 7
+        self.conv_layers.append(
+            tf.keras.layers.Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
+        self.conv_layers.append(tf.keras.layers.Activation('relu'))
+        # 9
+        self.conv_layers.append(
+            tf.keras.layers.Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
+        self.conv_layers.append(tf.keras.layers.Activation('relu'))
+        self.conv_layers.append(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
+        # 12
+        self.conv_layers.append(
+            tf.keras.layers.Conv2D(filters=256, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
+        self.conv_layers.append(tf.keras.layers.Activation('relu'))
+        # 14
         self.conv_layers.append(
             tf.keras.layers.Conv2D(filters=out_filters, kernel_size=(3, 3), strides=(1, 1), padding='same',
                                    activation=None))
         self.conv_layers.append(tf.keras.layers.Activation('relu'))
-        self.conv_layers.append(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
 
         # combine the conv layers together
         self.model = tf.keras.Sequential(self.conv_layers)

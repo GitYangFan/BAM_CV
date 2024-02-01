@@ -35,17 +35,17 @@ class DataGenerator_image(tf.keras.utils.Sequence):
     def __getitem__(self, index):
         start = index * self.batch_size
         end = (index + 1) * self.batch_size
-        # batch_pixels = self.pixels[start:end]
-        # print('0 index is:', self.pixels[0])
-        # print('batch size:', len(batch_pixels))
-        batch_pixels = data_loader.load_img(self.folder, self.img_names, start, end)
-        # print('current data index is:', start)
+
+        standard_size = (48, 48)  # [image_height, image_width]
+        # standard_size = (100, 100)  # [image_height, image_width]
+        batch_pixels = data_loader.load_img(self.folder, self.img_names, start, end, standard_size)
+
         # check if there is enough img in the batch
         if len(batch_pixels) != self.batch_size:
             print('there is no enough data, data index is:', start)
             end = self.total_size - 1
             start = end - self.batch_size
-            batch_pixels = data_loader.load_img(self.folder, self.img_names, start, end)
+            batch_pixels = data_loader.load_img(self.folder, self.img_names, start, end, standard_size)
             print('replacing with the last possible batch with index:', start)
 
         # over sampling or under sampling to balance the batch data
@@ -56,10 +56,11 @@ class DataGenerator_image(tf.keras.utils.Sequence):
         batch_labels = one_hot(batch_labels, self.num_classes)
         batch_labels = np.array(batch_labels, dtype=np.int32)
 
-        image_height, image_width = 48, 48
+        # image_height, image_width = 48, 48
         # image_height, image_width = 224, 224
 
-        batch_pixels = batch_pixels.reshape((-1, image_height, image_width))
+        # reshape the image from vector back to square matrix
+        batch_pixels = batch_pixels.reshape((-1, standard_size[0], standard_size[1]))
         batch_labels = batch_labels.reshape((-1, self.num_classes))  # there are 7 categories of emotions
         tensor_pixels = tf.convert_to_tensor(batch_pixels, dtype=tf.float32)
         tensor_labels = tf.convert_to_tensor(batch_labels, dtype=tf.int32)

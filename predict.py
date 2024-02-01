@@ -54,13 +54,13 @@ def switch_data(case_value):
 
 img_folder, csv_folder, classes, label = switch_data(5)
 
+standard_size = (48, 48)  # [image_height, image_width]
 classes_true, names = data_loader.load_label(csv_folder, label)
-pixels = data_loader.load_img(img_folder, names, 0, len(classes_true))
+pixels = data_loader.load_img(img_folder, names, 0, len(classes_true), standard_size)
 classes_pred = []
 
 pixels_array = np.array(pixels, dtype=np.float32)
-image_height, image_width = 48, 48
-pixels_array = pixels_array.reshape((len(pixels_array), image_height, image_width))
+pixels_array = pixels_array.reshape((len(pixels_array), standard_size[0], standard_size[1]))
 predictions = model.predict(pixels_array)
 for prediction in predictions:
     predicted_class = np.argmax(prediction)     # find the most possible class for each image
