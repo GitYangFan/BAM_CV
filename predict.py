@@ -20,26 +20,16 @@ model = tf.keras.models.load_model('./model/BAM_best.hd5')
 # the switch function for selecting test dataset
 def switch_data(case_value):
     if case_value == 1:
-        img_folder = './dataset/fer2013/train'
-        csv_folder = './dataset/fer2013/train_label.csv'
-        classes = ['0=Angry', '1=Disgust', '2=Fear', '3=Happy', '4=Sad', '5=Surprise', '6=Neutral']
-        label = 'emotion'
-    elif case_value == 2:
-        img_folder = './dataset/fer2013/val'
-        csv_folder = './dataset/fer2013/val_label.csv'
-        classes = ['0=Angry', '1=Disgust', '2=Fear', '3=Happy', '4=Sad', '5=Surprise', '6=Neutral']
-        label = 'emotion'
-    elif case_value == 3:
         img_folder = './dataset/fer2013/test'
         csv_folder = './dataset/fer2013/test_label.csv'
         classes = ['0=Angry', '1=Disgust', '2=Fear', '3=Happy', '4=Sad', '5=Surprise', '6=Neutral']
         label = 'emotion'
-    elif case_value == 4:
+    elif case_value == 2:
         img_folder = './dataset/wiki_crop/image'
         csv_folder = './dataset/wiki_crop/wiki_test.csv'
         classes = ['0=female', '1=male']
         label = 'gender'
-    elif case_value == 5:
+    elif case_value == 3:
         img_folder = './dataset/RAF-DB/aligned'
         csv_folder = './dataset/RAF-DB/test_label_shuffled_aligned_idx0.csv'
         classes = ['0=Surprise', '1=Fear', '2=Disgust', '3=Happy', '4=Sad', '5=Angry', '6=Neutral']
@@ -52,9 +42,10 @@ def switch_data(case_value):
     return img_folder, csv_folder, classes, label
 
 
-img_folder, csv_folder, classes, label = switch_data(5)
+img_folder, csv_folder, classes, label = switch_data(3)
 
 standard_size = (48, 48)  # [image_height, image_width]
+# standard_size = (100, 100)  # [image_height, image_width]
 classes_true, names = data_loader.load_label(csv_folder, label)
 pixels = data_loader.load_img(img_folder, names, 0, len(classes_true), standard_size)
 classes_pred = []

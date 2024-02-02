@@ -74,7 +74,7 @@ class model_attention_final(tf.keras.Model):
 
         out = conv1_t  # model1: pure CNN - shape (N, C, k, k)
         out = cov1  # model2: covariance matrix - shape (N, C2, C1, C1)
-        out = feature_fusion(conv1_t, cov1, weight2=0.01)  # model3: feature fusion of 1 and 2 - shape (N, C+C2, k, k)
+        out = feature_fusion(conv1_t, cov1, weight2=1)  # model3: feature fusion of 1 and 2 - shape (N, C+C2, k, k)
 
         for l in range(1, self.cov_layers + 1):
             out = getattr(self, f"layer_N_C_d_d_bilinear_attention{l}")(out)
