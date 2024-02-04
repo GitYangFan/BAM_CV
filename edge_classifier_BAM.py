@@ -109,8 +109,8 @@ modell.summary()
 
 # spe = 128
 # ep = 500
-spe = 30
-ep = 200
+spe = 128
+ep = 500
 
 history = modell.fit(
     generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=32, num_classes=num_class),
