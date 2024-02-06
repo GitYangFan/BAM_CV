@@ -16,8 +16,8 @@ tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
 
 num_class = 7
-model = cl.model_attention_final(n_channels_main=256, data_layers=1, cov_layers=3, inner_channels=5, N_exp=3,
-                                 N_heads=8, num_classes=num_class)      # Note: n_channels_main must be an integer multiple of N_heads
+model = cl.model_attention_final(n_channels_main=256, data_layers=0, cov_layers=3, inner_channels=5, N_exp=3,
+                                 N_heads=4, num_classes=num_class)      # Note: n_channels_main must be an integer multiple of N_heads
 
 inputs = tf.keras.Input((None, None))
 # inputs = tf.keras.Input((48, 48))
@@ -109,8 +109,8 @@ modell.summary()
 
 # spe = 128
 # ep = 500
-spe = 128
-ep = 500
+spe = 30
+ep = 10
 
 history = modell.fit(
     generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=32, num_classes=num_class),

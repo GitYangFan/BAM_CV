@@ -19,7 +19,8 @@ class model_attention_final(tf.keras.Model):
         N_heads (int): Number of heads for the multi-head attention mechanisms.
     """
 
-    def __init__(self, n_channels_main=10, data_layers=2, cov_layers=4, inner_channels=10, N_exp=3, N_heads=5, num_classes=7):
+    def __init__(self, n_channels_main=10, data_layers=2, cov_layers=4, inner_channels=10, N_exp=3, N_heads=5,
+                 num_classes=7):
         super(model_attention_final, self).__init__()
         self.data_layers = data_layers
         self.cov_layers = cov_layers
@@ -42,8 +43,10 @@ class model_attention_final(tf.keras.Model):
                     MultiHeadAttention_N_C_d_d_bilinear(num_heads=self.N_heads))
             setattr(self, f"layer_N_C_d_d_spd_activation{l}",
                     layer_N_C_d_d_spd_activation_scaled(N_exp=self.N_exp))
-        self.layer_N_c_d_d_to_N_d_d_3_softmax = layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(num_classes)
         self.layer_N_M_d_1_to_N_x_x_C_conv = layer_N_M_d_1_to_N_x_x_C_conv(out_filters=self.n_channels_main)
+        # self.layer_N_c_d_d_to_N_d_d_3_softmax = layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(num_classes)
+        self.layer_N_c_d_d_to_N_d_d_3_LogEig = layer_N_c_d_d_to_N_d_d_3_LogEig(num_classes)
+        self.layer_softmax2 = layer_softmax2(num_classes)
 
     def call(self, inputs, **kwargs):
         M = tf.shape(inputs)[1]
@@ -63,28 +66,30 @@ class model_attention_final(tf.keras.Model):
             out = getattr(self, f"layer_attention_samples_for_each_feature{l}")(out)
             out = getattr(self, f"layer_channels_dense_res_N_M_d_c{l}")(out)
 
-        # compute the covariance matrices (old version, abandoned)
-        # cov1 = data_N_M_d_c_to_cov_N_c_d_d(out)
+        # add some image attention layers here
 
         conv1 = self.layer_N_M_d_1_to_N_x_x_C_conv(out)  # reduce the complexity       # shape (N, k, k, C)
-        conv1_t = tf.transpose(conv1, [0, 3, 1, 2])  # shape (N, C, k, k)
+        # image_representation = tf.transpose(conv1, [0, 3, 1, 2])  # shape (N, C, k, k)
 
         C2 = self.N_heads
         cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(conv1, C2)  # shape (N, C2, C1, C1)    C2 = N_heads
 
-        out = conv1_t  # model1: pure CNN - shape (N, C, k, k)
+        # out = conv1_t  # model1: pure CNN - shape (N, C, k, k)
         out = cov1  # model2: covariance matrix - shape (N, C2, C1, C1)
-        out = feature_fusion(conv1_t, cov1, weight2=1)  # model3: feature fusion of 1 and 2 - shape (N, C+C2, k, k)
+        # out = feature_fusion(image_representation, cov1, weight2=1)  # model3: feature fusion of 1 and 2 - shape (N, C+C2, k, k)
 
         for l in range(1, self.cov_layers + 1):
             out = getattr(self, f"layer_N_C_d_d_bilinear_attention{l}")(out)
             out = getattr(self, f"layer_N_C_d_d_spd_activation{l}")(out)
         oout = [out, M]
-        cov3 = self.layer_N_c_d_d_to_N_d_d_3_softmax(oout)
+
+        # cov3 = self.layer_N_c_d_d_to_N_d_d_3_softmax(oout)    #(old version, abandoned)
+
         # here throw out softmax output and keep shape [N,width,width,C]
-        # image_representation has shape [N,C, height,width]
-        # final_output=layer(cov3,image_representation)
-        return cov3
+        cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
+        fusion = feature_fusion(conv1, cov_euklidean, weight2=0.1)
+        final_output = self.layer_softmax2(fusion)
+        return final_output
 
     def get_config(self):
         return {
@@ -106,18 +111,18 @@ class model_attention_final(tf.keras.Model):
 def feature_fusion(tensor1, tensor2, weight2=1.0):
     """
     This function is aimed to fusion the first and second dimension features...
-    combine two tensors with different shapes (N, C, k, k) and (N, C2, C1, C1)
+    combine two tensors with different shapes (N, k, k, C) and (N, C1, C1, C2)
     """
     # feature_pooled1 = tf.reduce_mean(tensor1, axis=[2, 3], keepdims=True)   # shape (N, C, 1, 1)
     # feature_pooled2 = tf.reduce_mean(tensor2, axis=[2, 3], keepdims=True)   # shape (N, C2, 1, 1)
-    tensor1_t = tf.transpose(tensor1, [0, 2, 3, 1])  # shape (N, k, k, C)
-    tensor2_t = tf.transpose(tensor2, [0, 2, 3, 1])  # shape (N, C1, C1, C2)
+    # tensor1_t = tf.transpose(tensor1, [0, 2, 3, 1])  # shape (N, k, k, C)
+    # tensor2_t = tf.transpose(tensor2, [0, 2, 3, 1])  # shape (N, C1, C1, C2)
     # shape1 = tensor1_t.shape
-    shape1 = tf.shape(tensor1_t)
-    tensor2_resize = tf.image.resize(tensor2_t, (shape1[1], shape1[2]))  # shape (N, k, k, C2)
-    feature_combined = tf.concat([tensor1_t, tensor2_resize * weight2], axis=-1)  # shape (N, k, k, C+C2)
-    feature_combined_t = tf.transpose(feature_combined, [0, 3, 1, 2])
-    return feature_combined_t
+    shape1 = tf.shape(tensor1)
+    tensor2_resize = tf.image.resize(tensor2, (shape1[1], shape1[2]))  # shape (N, k, k, C2)
+    feature_combined = tf.concat([tensor1, tensor2_resize * weight2], axis=-1)  # shape (N, k, k, C+C2)
+    # feature_combined_t = tf.transpose(feature_combined, [0, 3, 1, 2])
+    return feature_combined
 
 
 def data_N_M_d_c_to_cov_N_C2_C1_C1_image(input, N_heads):
@@ -197,6 +202,215 @@ class layer_N_M_d_1_to_N_x_x_C_conv(tf.keras.Model):  # reduce the complexity of
 
     def call(self, inputs):
         return self.model(inputs)
+
+
+class layer_N_c_d_d_to_N_d_d_3_LogEig(tf.keras.layers.Layer):
+    """
+    Applies LogEig layer, calculates probabilities for the 3 output classes
+    """
+
+    def __init__(self, num_classes=7, **kwargs):
+        super(layer_N_c_d_d_to_N_d_d_3_LogEig, self).__init__(**kwargs)
+        self.ln_em = tf.keras.layers.LayerNormalization()
+        self.num_classes = num_classes
+
+    def build(self, input_shape):
+        neurons_in = tf.cast(input_shape[0][1], tf.int32) + 10
+        # print('input_shape:', input_shape)
+        # print('neurons_in:', neurons_in)
+        self.w2 = self.add_weight(
+            shape=(neurons_in, neurons_in),
+            initializer=tf.keras.initializers.HeNormal(),
+            # initializer=tf.keras.initializers.GlorotNormal(),
+            trainable=True,
+            dtype=self.dtype,
+            name="w2"
+        )
+        self.b2 = self.add_weight(
+            shape=(neurons_in,),
+            initializer=tf.keras.initializers.Zeros(),
+            trainable=True,
+            dtype=self.dtype,
+            name="b2"
+        )
+        self.w3 = self.add_weight(
+            shape=(neurons_in, neurons_in),
+            # initializer=tf.keras.initializers.HeNormal(),
+            initializer=tf.keras.initializers.GlorotNormal(),
+            trainable=True,
+            dtype=self.dtype,
+            name="w3"
+        )
+        self.b3 = self.add_weight(
+            shape=(neurons_in,),
+            initializer=tf.keras.initializers.Zeros(),
+            trainable=True,
+            dtype=self.dtype,
+            name="b3"
+        )
+        self.w4 = self.add_weight(
+            shape=(neurons_in, neurons_in),
+            initializer=tf.keras.initializers.HeNormal(),
+            # initializer=tf.keras.initializers.GlorotNormal(),
+            trainable=True,
+            dtype=self.dtype,
+            name="w4"
+        )
+        self.b4 = self.add_weight(
+            shape=(neurons_in,),
+            initializer=tf.keras.initializers.Zeros(),
+            trainable=True,
+            dtype=self.dtype,
+            name="b4"
+        )
+        self.w5 = self.add_weight(
+            shape=(neurons_in, neurons_in),
+            # initializer=tf.keras.initializers.HeNormal(),
+            initializer=tf.keras.initializers.GlorotNormal(),
+            trainable=True,
+            dtype=self.dtype,
+            name="w4"
+        )
+        self.b5 = self.add_weight(
+            shape=(neurons_in,),
+            initializer=tf.keras.initializers.Zeros(),
+            trainable=True,
+            dtype=self.dtype,
+            name="b4"
+        )
+
+        self.w_embedding_1 = self.add_weight(
+            shape=(2, 10),
+            initializer=tf.keras.initializers.GlorotNormal(),
+            # initializer=tf.keras.initializers.HeNormal(),
+            trainable=True,
+            dtype=self.dtype,
+            name="w_embedding_1"
+        )
+        self.b_embedding_1 = self.add_weight(
+            shape=(10,),
+            initializer=tf.keras.initializers.Zeros(),
+            trainable=True,
+            dtype=self.dtype,
+            name="b_embedding_1"
+        )
+
+        self.w_embedding_2 = self.add_weight(
+            shape=(10, 100),
+            # initializer=tf.keras.initializers.GlorotNormal(),
+            initializer=tf.keras.initializers.HeNormal(),
+            trainable=True,
+            dtype=self.dtype,
+            name="w_embedding_2"
+        )
+        self.b_embedding_2 = self.add_weight(
+            shape=(100,),
+            initializer=tf.keras.initializers.Zeros(),
+            trainable=True,
+            dtype=self.dtype,
+            name="b_embedding_2"
+        )
+        self.w_embedding_3 = self.add_weight(
+            shape=(100, 10),
+            initializer=tf.keras.initializers.GlorotNormal(),
+            # initializer=tf.keras.initializers.HeNormal(),
+            trainable=True,
+            dtype=self.dtype,
+            name="w_embedding_2"
+        )
+        self.b_embedding_3 = self.add_weight(
+            shape=(10,),
+            initializer=tf.keras.initializers.Zeros(),
+            trainable=True,
+            dtype=self.dtype,
+            name="b_embedding_2"
+        )
+
+    # @tf.function(reduce_retracing=True)
+    def call(self, inputs, **kwargs):
+        N = tf.cast(tf.shape(inputs[0])[0], tf.float32)
+        M = tf.cast(inputs[1], tf.float32)
+        d = tf.cast(tf.shape(inputs[0])[2], tf.float32)
+
+        M_d_matrix = tf.stack([M / 500, d / 100], axis=-1)[None,]
+
+        em = tf.matmul(M_d_matrix, self.w_embedding_1) + self.b_embedding_1
+        em2 = tf.nn.relu(tf.matmul(self.ln_em(em), self.w_embedding_2) + self.b_embedding_2)
+        em3 = em + tf.matmul(em2, self.w_embedding_3) + self.b_embedding_3
+
+        mat = tf.ones((N, d, d, 1))
+        embeddings = mat * em3
+
+        ip = inputs[0]
+
+        eigvals, eigvecs = tf.linalg.eigh(0.5 * (ip + tf.transpose(ip, [0, 1, 3, 2])))
+        log_eigvals = tf.math.log(tf.maximum(eigvals, 0.0001))
+
+        # Multiply the eigenvectors by the log of eigenvalues
+        log_eigvecs = tf.matmul(eigvecs, tf.linalg.diag(log_eigvals))
+        log_inputs = tf.matmul(log_eigvecs, tf.transpose(eigvecs, (0, 1, 3, 2)))
+        log_inputs_T = tf.transpose(log_inputs, (0, 2, 3, 1))
+
+        euklidean_inputs = tf.concat([log_inputs_T, embeddings], axis=-1)
+
+        res_h = tf.nn.relu(tf.matmul(matrixNormalization_N_d_d_c(euklidean_inputs), self.w2) + self.b2)
+
+        h2 = euklidean_inputs + tf.matmul(res_h, self.w3) + self.b3
+
+        res_h2 = tf.nn.relu(tf.matmul(matrixNormalization_N_d_d_c(h2), self.w4) + self.b4)
+
+        h3 = h2 + tf.matmul(res_h2, self.w5) + self.b5
+        return h3
+
+    def get_config(self):
+        return {}
+
+    def compute_output_shape(self, input_shape):
+        # return tf.concat([input_shape[0], 1, 1, 7], 0)        # the output shape
+        return tf.concat([input_shape[0], input_shape[2], input_shape[3], self.num_classes], 0)  # the output shape
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+
+class layer_softmax2(tf.keras.layers.Layer):
+    """
+    Calculates probabilities for the number of output classes
+    """
+
+    def __init__(self, num_classes=7, **kwargs):
+        super(layer_softmax2, self).__init__(**kwargs)
+        self.ln_em = tf.keras.layers.LayerNormalization()
+        self.num_classes = num_classes
+
+    def build(self, input_shape):
+        neurons_in = tf.cast(input_shape[3], tf.int32)
+        self.w = self.add_weight(
+            shape=(neurons_in, self.num_classes),  # the output shape
+            initializer=tf.keras.initializers.GlorotNormal(),
+            trainable=True,
+            # constraint=tf.keras.constraints.NonNeg(),
+            dtype=tf.float32,
+            name='w'
+        )
+
+    def call(self, inputs, **kwargs):
+        cov3 = tf.reduce_mean(inputs, axis=[1, 2], keepdims=True)
+        cov3 = tf.squeeze(cov3, [1, 2])
+        probs = tf.nn.softmax(tf.matmul(cov3, self.w), axis=1)
+        return probs
+
+    def get_config(self):
+        return {}
+
+    def compute_output_shape(self, input_shape):
+        # return tf.concat([input_shape[0], 1, 1, 7], 0)        # the output shape
+        return tf.concat([input_shape[0], input_shape[2], input_shape[3], self.num_classes], 0)  # the output shape
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
 class layer_N_M_d_1_to_N_M_d_C_residual(tf.keras.layers.Layer):
@@ -621,9 +835,8 @@ class layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(tf.keras.layers.Layer):
 
     def build(self, input_shape):
         neurons_in = tf.cast(input_shape[0][1], tf.int32) + 10
-        # print('neurons_in:', neurons_in)
-        # print('(neurons_in, 7):', (neurons_in, 7))
-        # print('input shape:',input_shape)
+        print('input_shape:', input_shape)
+        print('neurons_in:', neurons_in)
         self.w = self.add_weight(
             shape=(neurons_in, self.num_classes),  # the output shape
             initializer=tf.keras.initializers.GlorotNormal(),
@@ -777,15 +990,15 @@ class layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(tf.keras.layers.Layer):
         cov3 = tf.reduce_mean(h3, axis=[1, 2], keepdims=True)
         cov3 = tf.squeeze(cov3, [1, 2])
         probs = tf.nn.softmax(tf.matmul(cov3, self.w), axis=1)
-        # print('probs:', probs)
         return probs
+        # return h3
 
     def get_config(self):
         return {}
 
     def compute_output_shape(self, input_shape):
         # return tf.concat([input_shape[0], 1, 1, 7], 0)        # the output shape
-        return tf.concat([input_shape[0], input_shape[2], input_shape[3], 3], 0)  # the output shape
+        return tf.concat([input_shape[0], input_shape[2], input_shape[3], self.num_classes], 0)  # the output shape
 
     @classmethod
     def from_config(cls, config):
