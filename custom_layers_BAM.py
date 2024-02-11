@@ -31,13 +31,13 @@ class model_attention_final(tf.keras.Model):
         self.layer_N_M_d_1_to_N_M_d_C_residual = layer_N_M_d_1_to_N_M_d_C_residual(
             units_output=self.n_channels_main)
         l: int
-        for l in range(1, self.data_layers + 1):
-            setattr(self, f"layer_MH_attention_features_for_each_sample{l}",
-                    MultiHeadAttention_N_M_d_C_Feature(num_heads=self.N_heads, inner_channels=self.n_channels_main))
-            setattr(self, f"layer_attention_samples_for_each_feature{l}",
-                    MultiHeadAttention_N_M_d_C_Sample(num_heads=self.N_heads, inner_channels=self.n_channels_main))
-            setattr(self, f"layer_channels_dense_res_N_M_d_c{l}",
-                    layer_channels_dense_res_N_M_d_c(inner_channels=self.n_channels_main))
+        # for l in range(1, self.data_layers + 1):
+        #     setattr(self, f"layer_MH_attention_features_for_each_sample{l}",
+        #             MultiHeadAttention_N_M_d_C_Feature(num_heads=self.N_heads, inner_channels=self.n_channels_main))
+        #     setattr(self, f"layer_attention_samples_for_each_feature{l}",
+        #             MultiHeadAttention_N_M_d_C_Sample(num_heads=self.N_heads, inner_channels=self.n_channels_main))
+        #     setattr(self, f"layer_channels_dense_res_N_M_d_c{l}",
+        #             layer_channels_dense_res_N_M_d_c(inner_channels=self.n_channels_main))
         for l in range(1, self.cov_layers + 1):
             setattr(self, f"layer_N_C_d_d_bilinear_attention{l}",
                     MultiHeadAttention_N_C_d_d_bilinear(num_heads=self.N_heads))
@@ -61,10 +61,10 @@ class model_attention_final(tf.keras.Model):
         # residual layer with pre attention (Temporarily skip)
         o2 = self.layer_N_M_d_1_to_N_M_d_C_residual(o1)
         out = o2
-        for l in range(1, self.data_layers + 1):
-            out = getattr(self, f"layer_MH_attention_features_for_each_sample{l}")(out)
-            out = getattr(self, f"layer_attention_samples_for_each_feature{l}")(out)
-            out = getattr(self, f"layer_channels_dense_res_N_M_d_c{l}")(out)
+        # for l in range(1, self.data_layers + 1):
+        #     out = getattr(self, f"layer_MH_attention_features_for_each_sample{l}")(out)
+        #     out = getattr(self, f"layer_attention_samples_for_each_feature{l}")(out)
+        #     out = getattr(self, f"layer_channels_dense_res_N_M_d_c{l}")(out)
 
         # add some image attention layers here
 
@@ -381,7 +381,7 @@ class layer_softmax2(tf.keras.layers.Layer):
 
     def __init__(self, num_classes=7, **kwargs):
         super(layer_softmax2, self).__init__(**kwargs)
-        self.ln_em = tf.keras.layers.LayerNormalization()
+        # self.ln_em = tf.keras.layers.LayerNormalization()
         self.num_classes = num_classes
 
     def build(self, input_shape):
