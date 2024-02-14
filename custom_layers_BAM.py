@@ -87,7 +87,7 @@ class model_attention_final(tf.keras.Model):
 
         # here throw out softmax output and keep shape [N,width,width,C]
         cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
-        fusion = feature_fusion(conv1, cov_euklidean, weight2=0.01)
+        fusion = feature_fusion(conv1, cov_euklidean, weight2=0)
         final_output = self.layer_softmax2(fusion)
         return final_output
 
