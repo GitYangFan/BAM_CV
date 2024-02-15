@@ -87,7 +87,7 @@ class model_attention_final(tf.keras.Model):
 
         # here throw out softmax output and keep shape [N,width,width,C]
         cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
-        fusion = feature_fusion(conv1, cov_euklidean, weight2=0)
+        fusion = feature_fusion(conv1, cov_euklidean, weight1=0, weight2=1)
         final_output = self.layer_softmax2(fusion)
         return final_output
 
@@ -108,7 +108,7 @@ class model_attention_final(tf.keras.Model):
         return cls(**config)
 
 
-def feature_fusion(tensor1, tensor2, weight2=1.0):
+def feature_fusion(tensor1, tensor2, weight1=1.0, weight2=1.0):
     """
     This function is aimed to fusion the first and second dimension features...
     combine two tensors with different shapes (N, k, k, C) and (N, C1, C1, C2)
@@ -120,7 +120,7 @@ def feature_fusion(tensor1, tensor2, weight2=1.0):
     # shape1 = tensor1_t.shape
     shape1 = tf.shape(tensor1)
     tensor2_resize = tf.image.resize(tensor2, (shape1[1], shape1[2]))  # shape (N, k, k, C2)
-    feature_combined = tf.concat([tensor1, tensor2_resize * weight2], axis=-1)  # shape (N, k, k, C+C2)
+    feature_combined = tf.concat([tensor1 * weight1, tensor2_resize * weight2], axis=-1)  # shape (N, k, k, C+C2)
     # feature_combined_t = tf.transpose(feature_combined, [0, 3, 1, 2])
     return feature_combined
 
