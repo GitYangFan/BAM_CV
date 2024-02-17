@@ -51,7 +51,7 @@ class DataGenerator_image(tf.keras.utils.Sequence):
         # over sampling or under sampling to balance the batch data
         batch_pixels = np.array(batch_pixels, dtype=np.float32)
         batch_labels = self.labels[start:end]
-        # batch_pixels, batch_labels = over_sampling(batch_pixels, batch_labels, self.batch_size, self.num_classes)
+        batch_pixels, batch_labels = over_sampling(batch_pixels, batch_labels, self.batch_size, self.num_classes)
 
         batch_labels = one_hot(batch_labels, self.num_classes)
         batch_labels = np.array(batch_labels, dtype=np.int32)
