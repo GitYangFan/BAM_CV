@@ -1,5 +1,9 @@
 import tensorflow as tf
 import numpy as np
+from covpoolnet import _cal_cov_pooling
+from covpoolnet import _variable_with_orth_weight_decay
+from covpoolnet import _cal_rect_cov
+from covpoolnet import _cal_log_cov
 
 tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
@@ -47,6 +51,7 @@ class model_attention_final(tf.keras.Model):
         # self.layer_N_c_d_d_to_N_d_d_3_softmax = layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(num_classes)
         self.layer_N_c_d_d_to_N_d_d_3_LogEig = layer_N_c_d_d_to_N_d_d_3_LogEig(num_classes)
         self.layer_softmax2 = layer_softmax2(num_classes)
+        self.layer_dense = layer_dense(num_classes)
 
     def call(self, inputs, **kwargs):
         M = tf.shape(inputs)[1]
@@ -86,9 +91,12 @@ class model_attention_final(tf.keras.Model):
         # cov3 = self.layer_N_c_d_d_to_N_d_d_3_softmax(oout)    #(old version, abandoned)
 
         # here throw out softmax output and keep shape [N,width,width,C]
-        cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
-        fusion = feature_fusion(conv1, cov_euklidean, weight1=0, weight2=1)
-        final_output = self.layer_softmax2(fusion)
+        # cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
+        cov_baseline = baseline(conv1)
+        # cov_baseline = tf.expand_dims(cov_baseline, axis=-1)
+        # fusion = feature_fusion(conv1, cov_euklidean, weight1=0, weight2=1)
+        # final_output = self.layer_softmax2(fusion)
+        final_output = self.layer_dense(cov_baseline)
         return final_output
 
     def get_config(self):
@@ -106,6 +114,50 @@ class model_attention_final(tf.keras.Model):
     @classmethod
     def from_config(cls, config, **kwargs):
         return cls(**config)
+
+
+def baseline(input):
+    shape = tf.shape(input)
+    reshaped = tf.reshape(input, [shape[0], shape[1] * shape[2], shape[3]])
+    # reshaped = tf.reshape(input, shape=(-1, tf.shape(input)[1] * tf.shape(input)[2], tf.shape(input)[3]))
+    # Cov Pooling Layer
+    local5 = _cal_cov_pooling(reshaped)
+    # print('Name {}'.format(local5.shape))
+    # shape = local5.get_shape().as_list()
+    # BiRe Layer - 1
+    # weight1, weight2 = _variable_with_orth_weight_decay('orth_weight0', shape)
+    # local6 = tf.matmul(tf.matmul(weight2, local5), weight1, name='matmulout')
+    local7 = _cal_rect_cov(local5)
+    '''
+    # Additional BiRe Layer
+    shape = local7.get_shape().as_list()
+    print('spdpooling feature2: D1:%d, D2:%d, D3:%d', shape[0], shape[1], shape[2])
+    weight1, weight2 = _variable_with_orth_weight_decay('orth_weight1', shape)
+    local8 = tf.matmul(tf.matmul(weight2, local7), weight1)                        
+    '''
+    local9 = _cal_log_cov(local7)
+    shape = tf.shape(local9)
+    cov4 = tf.reshape(local9, [shape[0], shape[1] * shape[2]])
+
+    return cov4
+
+
+class layer_dense(tf.keras.Model):  # reduce the complexity of img
+    def __init__(self, num_classes=7):
+        super(layer_dense, self).__init__()
+        self.dense_layers = []
+
+        self.dense_layers.append(tf.keras.layers.Dense(2000, activation=None, name='fc_1'))
+        self.dense_layers.append(tf.keras.layers.Activation('relu'))
+        self.dense_layers.append(tf.keras.layers.Dense(128, activation=None, name='fc_2'))
+        self.dense_layers.append(tf.keras.layers.Activation('relu'))
+        self.dense_layers.append(tf.keras.layers.Dense(num_classes, activation=None, name='Bottleneck'))
+
+        # combine the dense layers together
+        self.model = tf.keras.Sequential(self.dense_layers)
+
+    def call(self, inputs):
+        return self.model(inputs)
 
 
 def feature_fusion(tensor1, tensor2, weight1=1.0, weight2=1.0):
