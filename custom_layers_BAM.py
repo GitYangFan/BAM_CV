@@ -33,8 +33,8 @@ class model_attention_final(tf.keras.Model):
         self.n_channels_main = n_channels_main
         self.N_exp = N_exp
         self.N_heads = N_heads
-        # self.weight1 = tf.Variable(initial_value=1, trainable=True, name='weight1', dtype=tf.float32)
-        # self.weight2 = tf.Variable(initial_value=0, trainable=True, name='weight2', dtype=tf.float32)
+        self.weight1 = tf.Variable(initial_value=1, trainable=True, name='weight1', dtype=tf.float32)
+        self.weight2 = tf.Variable(initial_value=1, trainable=True, name='weight2', dtype=tf.float32)
         self.layer_N_M_d_1_to_N_M_d_C_residual = layer_N_M_d_1_to_N_M_d_C_residual(
             units_output=self.n_channels_main)
         l: int
@@ -98,7 +98,7 @@ class model_attention_final(tf.keras.Model):
         cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
         # cov_baseline = self.layer_baseline(conv1)
         # cov_baseline = tf.expand_dims(cov_baseline, axis=-1)
-        fusion = feature_fusion(conv1, cov_euklidean, weight1=1, weight2=0)
+        fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
         final_output = self.layer_softmax2(fusion)
         # final_output = self.layer_dense(cov_baseline)
         return final_output
