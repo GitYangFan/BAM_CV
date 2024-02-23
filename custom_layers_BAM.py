@@ -82,6 +82,7 @@ class model_attention_final(tf.keras.Model):
 
         C2 = self.N_heads
         cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(conv1, C2)  # shape (N, C2, C1, C1)    C2 = N_heads
+        # cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(conv1, 1)
 
         # out = conv1_t  # model1: pure CNN - shape (N, C, k, k)
         out = cov1  # model2: covariance matrix - shape (N, C2, C1, C1)
@@ -102,9 +103,9 @@ class model_attention_final(tf.keras.Model):
         # final_output = self.layer_softmax2(fusion)
         # final_output = self.layer_dense(cov_baseline)
 
-        cov_euklidean = tf.reduce_mean(cov_euklidean, axis=-1)
+        # cov_euklidean = tf.reduce_mean(cov_euklidean, axis=-1)
         shape = tf.shape(cov_euklidean)
-        cov_euklidean = tf.reshape(cov_euklidean, [shape[0], shape[1] * shape[2]])
+        cov_euklidean = tf.reshape(cov_euklidean, [shape[0], shape[1] * shape[2] * shape[3]])
         final_output = self.layer_dense(cov_euklidean)
         return final_output
 
@@ -217,6 +218,7 @@ class baseline(tf.keras.layers.Layer):
 class layer_dense(tf.keras.Model):  # reduce the complexity of img
     def __init__(self, num_classes=7):
         super(layer_dense, self).__init__()
+        # self.flatten = tf.keras.layers.Flatten()
         self.dense_layers = []
 
         self.dense_layers.append(tf.keras.layers.Dense(2000, activation=None, name='fc_1'))
@@ -229,6 +231,7 @@ class layer_dense(tf.keras.Model):  # reduce the complexity of img
         self.model = tf.keras.Sequential(self.dense_layers)
 
     def call(self, inputs):
+        # inputs_flatten = self.flatten(inputs)
         return self.model(inputs)
 
 
