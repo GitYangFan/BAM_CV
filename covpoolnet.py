@@ -71,12 +71,12 @@ import tensorflow as tf
 #                     '''
 #                     local9 = _cal_log_cov(local7)
 #
-                # net = tf.reshape(local9,[batch_size,-1])
-                # net = slim.fully_connected(net, 2000, activation_fn=None, scope='fc_1', reuse=False)
-                # net = tf.nn.relu(net)
-                # net = slim.fully_connected(net, 128, activation_fn=None, scope='fc_2', reuse=False)
-                # net = tf.nn.relu(net)
-                # net = slim.fully_connected(net, bottleneck_layer_size, activation_fn=None, scope='Bottleneck', reuse=False)
+#                 net = tf.reshape(local9,[batch_size,-1])
+#                 net = slim.fully_connected(net, 2000, activation_fn=None, scope='fc_1', reuse=False)
+#                 net = tf.nn.relu(net)
+#                 net = slim.fully_connected(net, 128, activation_fn=None, scope='fc_2', reuse=False)
+#                 net = tf.nn.relu(net)
+#                 net = slim.fully_connected(net, bottleneck_layer_size, activation_fn=None, scope='Bottleneck', reuse=False)
 #     return net
 
 '''

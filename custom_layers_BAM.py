@@ -1,9 +1,10 @@
 import tensorflow as tf
 import numpy as np
-from covpoolnet import _cal_cov_pooling
-from covpoolnet import _variable_with_orth_weight_decay
-from covpoolnet import _cal_rect_cov
-from covpoolnet import _cal_log_cov
+
+# from covpoolnet import _cal_cov_pooling
+# from covpoolnet import _variable_with_orth_weight_decay
+# from covpoolnet import _cal_rect_cov
+# from covpoolnet import _cal_log_cov
 
 tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
@@ -32,6 +33,8 @@ class model_attention_final(tf.keras.Model):
         self.n_channels_main = n_channels_main
         self.N_exp = N_exp
         self.N_heads = N_heads
+        # self.weight1 = tf.Variable(initial_value=1, trainable=True, name='weight1', dtype=tf.float32)
+        # self.weight2 = tf.Variable(initial_value=0, trainable=True, name='weight2', dtype=tf.float32)
         self.layer_N_M_d_1_to_N_M_d_C_residual = layer_N_M_d_1_to_N_M_d_C_residual(
             units_output=self.n_channels_main)
         l: int
@@ -51,7 +54,8 @@ class model_attention_final(tf.keras.Model):
         # self.layer_N_c_d_d_to_N_d_d_3_softmax = layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(num_classes)
         self.layer_N_c_d_d_to_N_d_d_3_LogEig = layer_N_c_d_d_to_N_d_d_3_LogEig(num_classes)
         self.layer_softmax2 = layer_softmax2(num_classes)
-        self.layer_dense = layer_dense(num_classes)
+        # self.layer_baseline = baseline()
+        # self.layer_dense = layer_dense(num_classes)
 
     def call(self, inputs, **kwargs):
         M = tf.shape(inputs)[1]
@@ -65,7 +69,7 @@ class model_attention_final(tf.keras.Model):
 
         # residual layer with pre attention (Temporarily skip)
         o2 = self.layer_N_M_d_1_to_N_M_d_C_residual(o1)
-        out = o2
+        out = o1
         # for l in range(1, self.data_layers + 1):
         #     out = getattr(self, f"layer_MH_attention_features_for_each_sample{l}")(out)
         #     out = getattr(self, f"layer_attention_samples_for_each_feature{l}")(out)
@@ -91,12 +95,12 @@ class model_attention_final(tf.keras.Model):
         # cov3 = self.layer_N_c_d_d_to_N_d_d_3_softmax(oout)    #(old version, abandoned)
 
         # here throw out softmax output and keep shape [N,width,width,C]
-        # cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
-        cov_baseline = baseline(conv1)
+        cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
+        # cov_baseline = self.layer_baseline(conv1)
         # cov_baseline = tf.expand_dims(cov_baseline, axis=-1)
-        # fusion = feature_fusion(conv1, cov_euklidean, weight1=0, weight2=1)
-        # final_output = self.layer_softmax2(fusion)
-        final_output = self.layer_dense(cov_baseline)
+        fusion = feature_fusion(conv1, cov_euklidean, weight1=1, weight2=0)
+        final_output = self.layer_softmax2(fusion)
+        # final_output = self.layer_dense(cov_baseline)
         return final_output
 
     def get_config(self):
@@ -116,30 +120,93 @@ class model_attention_final(tf.keras.Model):
         return cls(**config)
 
 
-def baseline(input):
-    shape = tf.shape(input)
-    reshaped = tf.reshape(input, [shape[0], shape[1] * shape[2], shape[3]])
-    # reshaped = tf.reshape(input, shape=(-1, tf.shape(input)[1] * tf.shape(input)[2], tf.shape(input)[3]))
-    # Cov Pooling Layer
-    local5 = _cal_cov_pooling(reshaped)
-    # print('Name {}'.format(local5.shape))
-    # shape = local5.get_shape().as_list()
-    # BiRe Layer - 1
-    # weight1, weight2 = _variable_with_orth_weight_decay('orth_weight0', shape)
-    # local6 = tf.matmul(tf.matmul(weight2, local5), weight1, name='matmulout')
-    local7 = _cal_rect_cov(local5)
-    '''
-    # Additional BiRe Layer
-    shape = local7.get_shape().as_list()
-    print('spdpooling feature2: D1:%d, D2:%d, D3:%d', shape[0], shape[1], shape[2])
-    weight1, weight2 = _variable_with_orth_weight_decay('orth_weight1', shape)
-    local8 = tf.matmul(tf.matmul(weight2, local7), weight1)                        
-    '''
-    local9 = _cal_log_cov(local7)
-    shape = tf.shape(local9)
-    cov4 = tf.reshape(local9, [shape[0], shape[1] * shape[2]])
+class baseline(tf.keras.layers.Layer):
+    """
+    baseline layers
+    """
 
-    return cov4
+    def __init__(self, **kwargs):
+        super(baseline, self).__init__(**kwargs)
+        self.s1 = 100
+        self.s2 = 50
+
+    def build(self, input_shape):
+        self.w0 = self.add_weight(
+            shape=(self.s1, self.s2),
+            initializer=tf.keras.initializers.Orthogonal(),
+            trainable=True,
+            dtype=self.dtype,
+            name='orth_weight0'
+        )
+
+    def call(self, inputs):
+        shape = tf.shape(inputs)
+        reshaped = tf.reshape(inputs, [shape[0], shape[1] * shape[2], shape[3]])
+        # reshaped = tf.reshape(input, shape=(-1, tf.shape(input)[1] * tf.shape(input)[2], tf.shape(input)[3]))
+        # Cov Pooling Layer
+        local5 = self._cal_cov_pooling(reshaped)
+        # print('Name {}'.format(local5.shape))
+        shape = tf.shape(local5)
+        # BiRe Layer - 1
+        weight1, weight2 = self._variable_with_orth_weight_decay('orth_weight0', shape)
+        local6 = tf.matmul(tf.matmul(weight2, local5), weight1, name='matmulout')
+        local7 = self._cal_rect_cov(local6)
+        '''
+        # Additional BiRe Layer
+        shape = local7.get_shape().as_list()
+        print('spdpooling feature2: D1:%d, D2:%d, D3:%d', shape[0], shape[1], shape[2])
+        weight1, weight2 = _variable_with_orth_weight_decay('orth_weight1', shape)
+        local8 = tf.matmul(tf.matmul(weight2, local7), weight1)
+        '''
+        local9 = self._cal_log_cov(local7)
+        shape = tf.shape(local9)
+        cov4 = tf.reshape(local9, [shape[0], shape[1] * shape[2]])
+
+        return cov4
+
+    def _cal_cov_pooling(self, features):
+        shape_f = tf.shape(features)
+        # shape_f[0] = -1
+        centers_batch = tf.reduce_mean(tf.transpose(features, [0, 2, 1]), 2)
+        centers_batch = tf.reshape(centers_batch, [shape_f[0], 1, shape_f[2]])
+        centers_batch = tf.tile(centers_batch, [1, shape_f[1], 1])
+        tmp = tf.subtract(features, centers_batch)
+        tmp_t = tf.transpose(tmp, [0, 2, 1])
+        features_t = 1 / tf.cast((shape_f[1] - 1), tf.float32) * tf.matmul(tmp_t, tmp)
+        trace_t = tf.linalg.trace(features_t)
+        trace_t = tf.reshape(trace_t, [shape_f[0], 1])
+        trace_t = tf.tile(trace_t, [1, shape_f[2]])
+        trace_t = 0.0001 * tf.linalg.diag(trace_t)
+        return tf.add(features_t, trace_t)
+
+    # Implementation is of basically LogEig Layer
+    def _cal_log_cov(self, features):
+        [s_f, v_f] = tf.linalg.eigh(features)
+        s_f = tf.math.log(s_f)
+        s_f = tf.linalg.diag(s_f)
+        features_t = tf.matmul(tf.matmul(v_f, s_f), tf.transpose(v_f, [0, 2, 1]))
+        return features_t
+
+    # computes weights for BiMap Layer
+    def _variable_with_orth_weight_decay(self, name1, shape):
+        self.s1 = tf.cast(shape[2], tf.int32)
+        self.s2 = tf.cast(shape[2] / 2, tf.int32)
+        # w0_init, _ = tf.linalg.qr(tf.random.normal([s1, s2], mean=0.0, stddev=1.0))
+        # w0 = tf.Variable(initial_value=w0_init, name=name1)
+        tmp1 = tf.reshape(self.w0, (1, self.s1, self.s2))
+        tmp2 = tf.reshape(tf.transpose(self.w0), (1, self.s2, self.s1))
+        if shape[0] is not None:
+            tmp1 = tf.tile(tmp1, [shape[0], 1, 1])
+            tmp2 = tf.tile(tmp2, [shape[0], 1, 1])
+        return tmp1, tmp2
+
+    # ReEig Layer
+    def _cal_rect_cov(self, features):
+        [s_f, v_f] = tf.linalg.eigh(features)
+        s_f = tf.clip_by_value(s_f, 0.0001, 10000)
+        s_f = tf.linalg.diag(s_f)
+        features_t = tf.matmul(tf.matmul(v_f, s_f), tf.transpose(v_f, [0, 2, 1]))
+        return features_t
 
 
 class layer_dense(tf.keras.Model):  # reduce the complexity of img
@@ -160,7 +227,7 @@ class layer_dense(tf.keras.Model):  # reduce the complexity of img
         return self.model(inputs)
 
 
-def feature_fusion(tensor1, tensor2, weight1=1.0, weight2=1.0):
+def feature_fusion(tensor1, tensor2, weight1=1, weight2=1):
     """
     This function is aimed to fusion the first and second dimension features...
     combine two tensors with different shapes (N, k, k, C) and (N, C1, C1, C2)
