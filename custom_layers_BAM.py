@@ -55,7 +55,7 @@ class model_attention_final(tf.keras.Model):
         self.layer_N_c_d_d_to_N_d_d_3_LogEig = layer_N_c_d_d_to_N_d_d_3_LogEig(num_classes)
         self.layer_softmax2 = layer_softmax2(num_classes)
         # self.layer_baseline = baseline()
-        # self.layer_dense = layer_dense(num_classes)
+        self.layer_dense = layer_dense(num_classes)
 
     def call(self, inputs, **kwargs):
         M = tf.shape(inputs)[1]
@@ -98,9 +98,14 @@ class model_attention_final(tf.keras.Model):
         cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
         # cov_baseline = self.layer_baseline(conv1)
         # cov_baseline = tf.expand_dims(cov_baseline, axis=-1)
-        fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
-        final_output = self.layer_softmax2(fusion)
+        # fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
+        # final_output = self.layer_softmax2(fusion)
         # final_output = self.layer_dense(cov_baseline)
+
+        cov_euklidean = tf.reduce_mean(cov_euklidean, axis=-1)
+        shape = tf.shape(cov_euklidean)
+        cov_euklidean = tf.reshape(cov_euklidean, [shape[0], shape[1] * shape[2]])
+        final_output = self.layer_dense(cov_euklidean)
         return final_output
 
     def get_config(self):
@@ -218,7 +223,7 @@ class layer_dense(tf.keras.Model):  # reduce the complexity of img
         self.dense_layers.append(tf.keras.layers.Activation('relu'))
         self.dense_layers.append(tf.keras.layers.Dense(128, activation=None, name='fc_2'))
         self.dense_layers.append(tf.keras.layers.Activation('relu'))
-        self.dense_layers.append(tf.keras.layers.Dense(num_classes, activation=None, name='Bottleneck'))
+        self.dense_layers.append(tf.keras.layers.Dense(num_classes, activation='softmax', name='Bottleneck'))
 
         # combine the dense layers together
         self.model = tf.keras.Sequential(self.dense_layers)
