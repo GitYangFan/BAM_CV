@@ -114,8 +114,8 @@ spe = 128
 ep = 1000
 
 history = modell.fit(
-    generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=32, num_classes=num_class),
-    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=32, num_classes=num_class),
+    generator_image.DataGenerator_image(train_folder, train_labels_list, train_names, batch_size=128, num_classes=num_class),
+    validation_data=generator_image.DataGenerator_image(val_folder, val_labels_list, val_names, batch_size=128, num_classes=num_class),
     epochs=ep, steps_per_epoch=spe, callbacks=[lr_scheduler, tensorboard_callback, early_stopping, checkpoint], verbose=True)
 
 end_time = time.time()
