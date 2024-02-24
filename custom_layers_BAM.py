@@ -99,14 +99,14 @@ class model_attention_final(tf.keras.Model):
         cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
         # cov_baseline = self.layer_baseline(conv1)
         # cov_baseline = tf.expand_dims(cov_baseline, axis=-1)
-        # fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
+        fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
         # final_output = self.layer_softmax2(fusion)
         # final_output = self.layer_dense(cov_baseline)
 
         # cov_euklidean = tf.reduce_mean(cov_euklidean, axis=-1)
-        shape = tf.shape(cov_euklidean)
-        cov_euklidean = tf.reshape(cov_euklidean, [shape[0], shape[1] * shape[2] * shape[3]])
-        final_output = self.layer_dense(cov_euklidean)
+        # shape = tf.shape(cov_euklidean)
+        # cov_euklidean = tf.reshape(cov_euklidean, [shape[0], shape[1] * shape[2] * shape[3]])
+        final_output = self.layer_dense(fusion)
         return final_output
 
     def get_config(self):
@@ -218,7 +218,7 @@ class baseline(tf.keras.layers.Layer):
 class layer_dense(tf.keras.Model):  # reduce the complexity of img
     def __init__(self, num_classes=7):
         super(layer_dense, self).__init__()
-        # self.flatten = tf.keras.layers.Flatten()
+        self.flatten = tf.keras.layers.Flatten()
         self.dense_layers = []
 
         self.dense_layers.append(tf.keras.layers.Dense(2000, activation=None, name='fc_1'))
@@ -231,8 +231,8 @@ class layer_dense(tf.keras.Model):  # reduce the complexity of img
         self.model = tf.keras.Sequential(self.dense_layers)
 
     def call(self, inputs):
-        # inputs_flatten = self.flatten(inputs)
-        return self.model(inputs)
+        inputs_flatten = self.flatten(inputs)
+        return self.model(inputs_flatten)
 
 
 def feature_fusion(tensor1, tensor2, weight1=1, weight2=1):
