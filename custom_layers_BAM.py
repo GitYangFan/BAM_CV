@@ -52,9 +52,9 @@ class model_attention_final(tf.keras.Model):
                     layer_N_C_d_d_spd_activation_scaled(N_exp=self.N_exp))
         self.layer_N_M_d_1_to_N_x_x_C_conv = layer_N_M_d_1_to_N_x_x_C_conv(out_filters=self.n_channels_main)
         # self.layer_N_c_d_d_to_N_d_d_3_softmax = layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(num_classes)
-        self.layer_N_c_d_d_to_N_d_d_3_LogEig = layer_N_c_d_d_to_N_d_d_3_LogEig(num_classes)
-        self.layer_softmax2 = layer_softmax2(num_classes)
-        self.layer_baseline = baseline()
+        # self.layer_N_c_d_d_to_N_d_d_3_LogEig = layer_N_c_d_d_to_N_d_d_3_LogEig(num_classes)
+        # self.layer_softmax2 = layer_softmax2(num_classes)
+        # self.layer_baseline = baseline()
         self.layer_dense = layer_dense(num_classes)
 
     def call(self, inputs, **kwargs):
@@ -105,13 +105,11 @@ class model_attention_final(tf.keras.Model):
         # fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
         # final_output = self.layer_softmax2(fusion)
 
-        # # option 3: BAM modified LogEig with dense
-        cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
-        cov_euklidean2 = cal_logeig(cov1)
-        # cov_euklidean = tf.reduce_mean(cov_euklidean, axis=-1)
-        # shape = tf.shape(cov_euklidean)
-        # cov_euklidean = tf.reshape(cov_euklidean, [shape[0], shape[1] * shape[2] * shape[3]])
-        final_output = self.layer_dense(cov_euklidean2)
+        # option 3: BAM modified LogEig with dense
+        # cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
+        cov_euklidean = cal_logeig(out)
+        # fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
+        final_output = self.layer_dense(cov_euklidean)
         return final_output
 
     def get_config(self):
@@ -136,7 +134,7 @@ def cal_logeig(features):
     s_f = tf.math.log(s_f)
     s_f = tf.linalg.diag(s_f)
     features_t = tf.matmul(tf.matmul(v_f, s_f), tf.transpose(v_f, [0, 1, 3, 2]))        # shape (N, C2, C1, C1)
-    cov_euklidean = tf.transpose(features_t, [0, 2, 3, 1])
+    cov_euklidean = tf.transpose(features_t, [0, 2, 3, 1])      # shape (N, C1, C1, C2)
     return cov_euklidean
 
 

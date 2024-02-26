@@ -11,8 +11,8 @@ tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
 
 # load the pretrained model
-# model = tf.keras.models.load_model('./model/BAM_last.hd5')
-model = tf.keras.models.load_model('./model/BAM_best.hd5')
+model = tf.keras.models.load_model('./model/BAM_last.hd5')
+# model = tf.keras.models.load_model('./model/BAM_best.hd5')
 
 # pixels, classes_true = data_loader.load_test_set('./dataset/test_short.csv')
 
@@ -34,6 +34,16 @@ def switch_data(case_value):
         csv_folder = './dataset/RAF-DB/test_label_shuffled_aligned_idx0.csv'
         classes = ['0=Surprise', '1=Fear', '2=Disgust', '3=Happy', '4=Sad', '5=Angry', '6=Neutral']
         label = 'emotion'
+    elif case_value == 4:
+        img_folder = './dataset/RAF-DB/aligned'
+        csv_folder = './dataset/RAF-DB/train_label_shuffled_aligned_idx0.csv'
+        classes = ['0=Surprise', '1=Fear', '2=Disgust', '3=Happy', '4=Sad', '5=Angry', '6=Neutral']
+        label = 'emotion'
+    elif case_value == 5:
+        img_folder = './dataset/RAF-DB/aligned'
+        csv_folder = './dataset/RAF-DB/val_label_shuffled_aligned_idx0.csv'
+        classes = ['0=Surprise', '1=Fear', '2=Disgust', '3=Happy', '4=Sad', '5=Angry', '6=Neutral']
+        label = 'emotion'
     else:
         img_folder = './dataset/fer2013/train_debug'
         csv_folder = './dataset/fer2013/train_label_debug.csv'
@@ -42,10 +52,10 @@ def switch_data(case_value):
     return img_folder, csv_folder, classes, label
 
 
-img_folder, csv_folder, classes, label = switch_data(3)
+img_folder, csv_folder, classes, label = switch_data(5)
 
-standard_size = (48, 48)  # [image_height, image_width]
-# standard_size = (100, 100)  # [image_height, image_width]
+# standard_size = (48, 48)  # [image_height, image_width]
+standard_size = (100, 100)  # [image_height, image_width]
 classes_true, names = data_loader.load_label(csv_folder, label)
 pixels = data_loader.load_img(img_folder, names, 0, len(classes_true), standard_size)
 classes_pred = []
