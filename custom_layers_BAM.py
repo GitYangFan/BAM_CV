@@ -35,8 +35,8 @@ class model_attention_final(tf.keras.Model):
         self.N_heads = N_heads
         self.weight1 = tf.Variable(initial_value=1, trainable=True, name='weight1', dtype=tf.float32)
         self.weight2 = tf.Variable(initial_value=1, trainable=True, name='weight2', dtype=tf.float32)
-        self.layer_N_M_d_1_to_N_M_d_C_residual = layer_N_M_d_1_to_N_M_d_C_residual(
-            units_output=self.n_channels_main)
+        # self.layer_N_M_d_1_to_N_M_d_C_residual = layer_N_M_d_1_to_N_M_d_C_residual(
+        #     units_output=self.n_channels_main)
         l: int
         # for l in range(1, self.data_layers + 1):
         #     setattr(self, f"layer_MH_attention_features_for_each_sample{l}",
@@ -54,7 +54,7 @@ class model_attention_final(tf.keras.Model):
         # self.layer_N_c_d_d_to_N_d_d_3_softmax = layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(num_classes)
         self.layer_N_c_d_d_to_N_d_d_3_LogEig = layer_N_c_d_d_to_N_d_d_3_LogEig(num_classes)
         self.layer_softmax2 = layer_softmax2(num_classes)
-        # self.layer_baseline = baseline()
+        self.layer_baseline = baseline()
         self.layer_dense = layer_dense(num_classes)
 
     def call(self, inputs, **kwargs):
@@ -68,7 +68,7 @@ class model_attention_final(tf.keras.Model):
         # cov1 = tf.transpose(cov1, [0, 2, 3, 1])  # shape (N, C, C, 1)
 
         # residual layer with pre attention (Temporarily skip)
-        o2 = self.layer_N_M_d_1_to_N_M_d_C_residual(o1)
+        # o2 = self.layer_N_M_d_1_to_N_M_d_C_residual(o1)
         out = o1
         # for l in range(1, self.data_layers + 1):
         #     out = getattr(self, f"layer_MH_attention_features_for_each_sample{l}")(out)
@@ -96,17 +96,22 @@ class model_attention_final(tf.keras.Model):
         # cov3 = self.layer_N_c_d_d_to_N_d_d_3_softmax(oout)    #(old version, abandoned)
 
         # here throw out softmax output and keep shape [N,width,width,C]
-        cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
+        # # option 1: baseline
         # cov_baseline = self.layer_baseline(conv1)
-        # cov_baseline = tf.expand_dims(cov_baseline, axis=-1)
-        fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
-        # final_output = self.layer_softmax2(fusion)
         # final_output = self.layer_dense(cov_baseline)
 
+        # # option 2: BAM original softmax
+        # cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
+        # fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
+        # final_output = self.layer_softmax2(fusion)
+
+        # # option 3: BAM modified LogEig with dense
+        cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
+        cov_euklidean2 = cal_logeig(cov1)
         # cov_euklidean = tf.reduce_mean(cov_euklidean, axis=-1)
         # shape = tf.shape(cov_euklidean)
         # cov_euklidean = tf.reshape(cov_euklidean, [shape[0], shape[1] * shape[2] * shape[3]])
-        final_output = self.layer_dense(fusion)
+        final_output = self.layer_dense(cov_euklidean2)
         return final_output
 
     def get_config(self):
@@ -124,6 +129,15 @@ class model_attention_final(tf.keras.Model):
     @classmethod
     def from_config(cls, config, **kwargs):
         return cls(**config)
+
+
+def cal_logeig(features):
+    [s_f, v_f] = tf.linalg.eigh(features)
+    s_f = tf.math.log(s_f)
+    s_f = tf.linalg.diag(s_f)
+    features_t = tf.matmul(tf.matmul(v_f, s_f), tf.transpose(v_f, [0, 1, 3, 2]))        # shape (N, C2, C1, C1)
+    cov_euklidean = tf.transpose(features_t, [0, 2, 3, 1])
+    return cov_euklidean
 
 
 class baseline(tf.keras.layers.Layer):
