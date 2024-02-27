@@ -46,8 +46,8 @@ class model_attention_final(tf.keras.Model):
         #     setattr(self, f"layer_channels_dense_res_N_M_d_c{l}",
         #             layer_channels_dense_res_N_M_d_c(inner_channels=self.n_channels_main))
         for l in range(1, self.cov_layers + 1):
-            # setattr(self, f"layer_N_C_d_d_bilinear_attention{l}",
-            #         MultiHeadAttention_N_C_d_d_bilinear(num_heads=self.N_heads))
+            setattr(self, f"layer_N_C_d_d_bilinear_attention{l}",
+                    MultiHeadAttention_N_C_d_d_bilinear(num_heads=self.N_heads))
             setattr(self, f"layer_N_C_d_d_spd_activation{l}",
                     layer_N_C_d_d_spd_activation_scaled(N_exp=self.N_exp))
         self.layer_N_M_d_1_to_N_x_x_C_conv = layer_N_M_d_1_to_N_x_x_C_conv(out_filters=self.n_channels_main)
@@ -89,7 +89,7 @@ class model_attention_final(tf.keras.Model):
         # out = feature_fusion(image_representation, cov1, weight2=1)  # model3: feature fusion of 1 and 2 - shape (N, C+C2, k, k)
 
         for l in range(1, self.cov_layers + 1):
-            # out = getattr(self, f"layer_N_C_d_d_bilinear_attention{l}")(out)
+            out = getattr(self, f"layer_N_C_d_d_bilinear_attention{l}")(out)
             out = getattr(self, f"layer_N_C_d_d_spd_activation{l}")(out)
         oout = [out, M]
 
@@ -106,8 +106,8 @@ class model_attention_final(tf.keras.Model):
         # final_output = self.layer_softmax2(fusion)
 
         # option 3: BAM modified LogEig with dense
-        # cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
-        cov_euklidean = cal_logeig(out)
+        cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
+        # cov_euklidean = cal_logeig(out)
         # fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
         final_output = self.layer_dense(cov_euklidean)
         return final_output
