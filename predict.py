@@ -4,15 +4,33 @@ import sklearn.metrics as sk
 import matplotlib.pyplot as plt
 import seaborn as sns
 import data_loader
-import helpers_BAM as h
 import custom_layers_BAM as cl
 
 tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
 
+custom_objects = {
+    'layer_N_M_d_1_to_N_M_d_C_residual': cl.layer_N_M_d_1_to_N_M_d_C_residual,
+    'layer_N_M_d_C_attention_features_for_each_sample': cl.layer_N_M_d_C_attention_features_for_each_sample,
+    'layer_N_M_d_C_attention_samples_for_each_feature': cl.layer_N_M_d_C_attention_samples_for_each_feature,
+    'layer_N_C_d_d_bilinear_attention_cov2cor_spd':cl.layer_N_C_d_d_bilinear_attention_cov2cor_spd,
+    'layer_N_C_d_d_spd_activation_scaled':cl.layer_N_C_d_d_spd_activation_scaled,
+    'layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2':cl.layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2,
+    'layer_channels_dense_res_N_M_d_c':cl.layer_channels_dense_res_N_M_d_c,
+    'data_N_M_d_c_to_cov_N_c_d_d':cl.data_N_M_d_c_to_cov_N_c_d_d,
+    'frob': cl.frob,
+    'lam_init_eps': cl.lam_init_eps,
+    'l1_constraintLessEqual': cl.l1_constraintLessEqual,
+    'layer_N_M_d_1_to_N_x_x_C_conv': cl.layer_N_M_d_1_to_N_x_x_C_conv,
+    'layer_N_c_d_d_to_N_d_d_3_LogEig': cl.layer_N_c_d_d_to_N_d_d_3_LogEig,
+    'layer_dense': cl.layer_dense,
+    'layer_softmax2': cl.layer_softmax2,
+    'baseline': cl.baseline
+}
+
 # load the pretrained model
-model = tf.keras.models.load_model('./model/BAM_last.hd5')
-# model = tf.keras.models.load_model('./model/BAM_best.hd5')
+model = tf.keras.models.load_model('./model/BAM_last.hd5', custom_objects=custom_objects)
+# model = tf.keras.models.load_model('./model/BAM_best.hd5', custom_objects=custom_objects)
 
 # pixels, classes_true = data_loader.load_test_set('./dataset/test_short.csv')
 
@@ -52,7 +70,7 @@ def switch_data(case_value):
     return img_folder, csv_folder, classes, label
 
 
-img_folder, csv_folder, classes, label = switch_data(5)
+img_folder, csv_folder, classes, label = switch_data(4)
 
 # standard_size = (48, 48)  # [image_height, image_width]
 standard_size = (100, 100)  # [image_height, image_width]
@@ -65,7 +83,7 @@ pixels_array = pixels_array.reshape((len(pixels_array), standard_size[0], standa
 predictions = model.predict(pixels_array)
 for prediction in predictions:
     predicted_class = np.argmax(prediction)     # find the most possible class for each image
-    print('possibility:', prediction, 'class:', predicted_class)
+    # print('possibility:', prediction, 'class:', predicted_class)
     classes_pred.append(predicted_class)
 
 print('classes_pred:', classes_pred)

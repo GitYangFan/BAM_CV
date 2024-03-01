@@ -106,8 +106,8 @@ class model_attention_final(tf.keras.Model):
         # final_output = self.layer_softmax2(fusion)
 
         # option 3: BAM modified LogEig with dense
-        cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
-        # cov_euklidean = cal_logeig(out)
+        # cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
+        cov_euklidean = cal_logeig(out)
         # fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
         final_output = self.layer_dense(cov_euklidean)
         return final_output
@@ -307,7 +307,7 @@ def data_N_M_d_c_to_cov_N_C2_C1_C1_image(input, N_heads):
 
 
 class layer_N_M_d_1_to_N_x_x_C_conv(tf.keras.Model):  # reduce the complexity of img
-    def __init__(self, out_filters=256):
+    def __init__(self, out_filters=100):
         super(layer_N_M_d_1_to_N_x_x_C_conv, self).__init__()
         self.conv_layers = []
         # define the CNN architecture
