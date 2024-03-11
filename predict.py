@@ -20,6 +20,8 @@ custom_objects = {
     'layer_N_c_d_d_to_N_d_d_3_softmax':cl.layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(7),
     'layer_channels_dense_res_N_M_d_c':cl.layer_channels_dense_res_N_M_d_c,
     'data_N_M_d_c_to_cov_N_c_d_d':cl.data_N_M_d_c_to_cov_N_c_d_d,
+    'layer_N_C_d_d_bilinear_attention1': cl.MultiHeadAttention_N_C_d_d_bilinear(num_heads=2),
+    'layer_N_C_d_d_spd_activation1': cl.layer_N_C_d_d_spd_activation_scaled(N_exp=3),
     'frob': cl.frob,
     'lam_init_eps': cl.lam_init_eps,
     'l1_constraintLessEqual': cl.l1_constraintLessEqual,
@@ -83,10 +85,11 @@ classes_pred = []
 pixels_array = np.array(pixels, dtype=np.float32)
 pixels_array = pixels_array.reshape((len(pixels_array), standard_size[0], standard_size[1]))
 
+# """ evaluate using model.evaluate
 # img_gen = generator_image.DataGenerator_image(img_folder, classes_true, names, batch_size=128, num_classes=len(classes))
 # evaluation = model.evaluate(img_gen)
 
-# """
+# """ evaluate using model.predict
 predictions = model.predict(pixels_array)
 for prediction in predictions:
     predicted_class = np.argmax(prediction)     # find the most possible class for each image

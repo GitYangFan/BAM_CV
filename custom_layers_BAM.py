@@ -52,7 +52,7 @@ class model_attention_final(tf.keras.Model):
                     layer_N_C_d_d_spd_activation_scaled(N_exp=self.N_exp))
         self.layer_N_M_d_1_to_N_x_x_C_conv = layer_N_M_d_1_to_N_x_x_C_conv(out_filters=self.n_channels_main)
         # self.layer_N_c_d_d_to_N_d_d_3_softmax = layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(num_classes)
-        self.layer_N_c_d_d_to_N_d_d_3_LogEig = layer_N_c_d_d_to_N_d_d_3_LogEig(num_classes)
+        # self.layer_N_c_d_d_to_N_d_d_3_LogEig = layer_N_c_d_d_to_N_d_d_3_LogEig(num_classes)
         # self.layer_softmax2 = layer_softmax2(num_classes)
         # self.layer_baseline = baseline()
         self.layer_dense = layer_dense(num_classes)
@@ -82,15 +82,19 @@ class model_attention_final(tf.keras.Model):
 
         C2 = self.N_heads
         cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(conv1, C2)  # shape (N, C2, C1, C1)    C2 = N_heads
-        # cov1 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(conv1, 1)
+        # cov2 = data_N_M_d_c_to_cov_N_C2_C1_C1_image(conv1, 1)  # shape (N, 1, c, c)
+        # cov3 = tf.reshape(cov2, shape=(-1, C2*C2, tf.shape(cov2)[3] // C2, tf.shape(cov2)[3] // C2))  # shape (N, C2*C2, c/C2, c/C2)
+        cov_base = _cal_cov_pooling(conv1)  # shape (N, 1, c, c)
+        # cov_base2 = tf.reshape(cov_base, shape=(-1, C2 * C2, tf.shape(cov_base)[3] // C2, tf.shape(cov_base)[3] // C2))  # shape (N, C2*C2, c/C2, c/C2)
 
         # out = conv1_t  # model1: pure CNN - shape (N, C, k, k)
-        out = cov1  # model2: covariance matrix - shape (N, C2, C1, C1)
+        out = cov_base  # model2: covariance matrix - shape (N, C2, C1, C1)
         # out = feature_fusion(image_representation, cov1, weight2=1)  # model3: feature fusion of 1 and 2 - shape (N, C+C2, k, k)
 
         for l in range(1, self.cov_layers + 1):
             out = getattr(self, f"layer_N_C_d_d_bilinear_attention{l}")(out)
             out = getattr(self, f"layer_N_C_d_d_spd_activation{l}")(out)
+        # out_reshape = tf.reshape(out, shape=(-1, 1, self.n_channels_main, self.n_channels_main))  # shape (N, 1, c, c)
         oout = [out, M]
 
         # cov3 = self.layer_N_c_d_d_to_N_d_d_3_softmax(oout)    #(old version, abandoned)
@@ -108,6 +112,7 @@ class model_attention_final(tf.keras.Model):
         # option 3: BAM modified LogEig with dense
         # cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
         cov_euklidean = cal_logeig(out)
+        # cov_euklidean = _cal_log_cov(out_reshape)
         # fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
         final_output = self.layer_dense(cov_euklidean)
         return final_output
@@ -140,6 +145,15 @@ def cal_logeig(features):
     cov_euklidean = tf.transpose(features_t, [0, 2, 3, 1])      # shape (N, C1, C1, C2)
     # cov_euklidean = features_t
     return cov_euklidean
+
+
+def _cal_log_cov(features):
+    features = tf.squeeze(features, [1])
+    [s_f, v_f] = tf.linalg.eigh(features)
+    s_f = tf.math.log(s_f)
+    s_f = tf.linalg.diag(s_f)
+    features_t = tf.matmul(tf.matmul(v_f, s_f), tf.transpose(v_f, [0, 2, 1]))
+    return features_t
 
 
 class baseline(tf.keras.layers.Layer):
@@ -304,6 +318,25 @@ def data_N_M_d_c_to_cov_N_C2_C1_C1_image(input, N_heads):
     trace_t = 0.0001 * tf.linalg.diag(trace_t)  # multiply small weight 0.0001
     cov_trace = tf.add(cov, trace_t)  # shape (N, C2, C1, C1)
     return cov_trace
+
+
+def _cal_cov_pooling(input):
+    features = tf.reshape(input, shape=(-1, tf.shape(input)[1] * tf.shape(input)[2], tf.shape(input)[3]))
+    shape_f = tf.shape(features)
+    # shape_f[0] = -1
+    centers_batch = tf.reduce_mean(tf.transpose(features, [0, 2, 1]),2)
+    centers_batch = tf.reshape(centers_batch, [shape_f[0], 1, shape_f[2]])
+    centers_batch = tf.tile(centers_batch, [1, shape_f[1], 1])
+    tmp = tf.subtract(features, centers_batch)
+    tmp_t = tf.transpose(tmp, [0, 2, 1])
+    features_t = 1/tf.cast((shape_f[1]-1),tf.float32)*tf.matmul(tmp_t, tmp)
+    trace_t = tf.linalg.trace(features_t)
+    trace_t = tf.reshape(trace_t, [shape_f[0], 1])
+    trace_t = tf.tile(trace_t, [1, shape_f[2]])
+    trace_t = 0.0001*tf.linalg.diag(trace_t)
+    cov = tf.add(features_t, trace_t)  # shape (N, c, c)
+    cov_expand =  tf.reshape(cov, shape=(-1, 1, tf.shape(cov)[1], tf.shape(cov)[2]))    # shape (N, 1, c, c)
+    return cov_expand
 
 
 class layer_N_M_d_1_to_N_x_x_C_conv(tf.keras.Model):  # reduce the complexity of img
