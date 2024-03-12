@@ -178,7 +178,7 @@ class baseline(tf.keras.layers.Layer):
     def call(self, inputs):
         shape = tf.shape(inputs)
         reshaped = tf.reshape(inputs, [shape[0], shape[1] * shape[2], shape[3]])
-        # reshaped = tf.reshape(input, shape=(-1, tf.shape(input)[1] * tf.shape(input)[2], tf.shape(input)[3]))
+        # reshaped = tf.reshape(inputs, shape=(-1, tf.shape(inputs)[1] * tf.shape(inputs)[2], tf.shape(inputs)[3]))
         # Cov Pooling Layer
         local5 = self._cal_cov_pooling(reshaped)
         # print('Name {}'.format(local5.shape))
@@ -340,7 +340,7 @@ def _cal_cov_pooling(input):
 
 
 class layer_N_M_d_1_to_N_x_x_C_conv(tf.keras.Model):  # reduce the complexity of img
-    def __init__(self, out_filters=100):
+    def __init__(self, out_filters):
         super(layer_N_M_d_1_to_N_x_x_C_conv, self).__init__()
         self.conv_layers = []
         # define the CNN architecture
