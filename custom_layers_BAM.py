@@ -282,7 +282,7 @@ def feature_fusion(tensor1, tensor2, weight1=1, weight2=1):
     return feature_combined
 
 
-def data_N_M_d_c_to_cov_N_C2_C1_C1_image(input, N_heads):
+def data_N_M_d_c_to_cov_N_C2_C1_C1_image(input, N_heads=5):
     """
     Convert input tensors of shape (N, M, d ,C) to covariance matrices of shape (N, C2, C1, C1).
     (Reference GitHub: https://github.com/d-acharya/CovPoolFER/blob/master/conv_feature_pooling/src/models/covpoolnet.py)

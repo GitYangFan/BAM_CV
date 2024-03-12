@@ -11,30 +11,39 @@ tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
 
 custom_objects = {
-    'weight_binary_loss':0.8,
+    'cal_logeig': cl.cal_logeig,
+    '_cal_log_cov': cl._cal_log_cov,
+    'baseline': cl.baseline,
+    'layer_dense': cl.layer_dense,
+    'feature_fusion': cl.feature_fusion,
+    'data_N_M_d_c_to_cov_N_C2_C1_C1_image': cl.data_N_M_d_c_to_cov_N_C2_C1_C1_image,
+    '_cal_cov_pooling': cl._cal_cov_pooling,
+    'layer_N_M_d_1_to_N_x_x_C_conv': cl.layer_N_M_d_1_to_N_x_x_C_conv,
+    'layer_N_c_d_d_to_N_d_d_3_LogEig': cl.layer_N_c_d_d_to_N_d_d_3_LogEig,
+    'layer_softmax2': cl.layer_softmax2,
     'layer_N_M_d_1_to_N_M_d_C_residual': cl.layer_N_M_d_1_to_N_M_d_C_residual,
     'layer_N_M_d_C_attention_features_for_each_sample': cl.layer_N_M_d_C_attention_features_for_each_sample,
     'layer_N_M_d_C_attention_samples_for_each_feature': cl.layer_N_M_d_C_attention_samples_for_each_feature,
-    'layer_N_C_d_d_bilinear_attention_cov2cor_spd':cl.layer_N_C_d_d_bilinear_attention_cov2cor_spd,
-    'layer_N_C_d_d_spd_activation_scaled':cl.layer_N_C_d_d_spd_activation_scaled,
-    'layer_N_c_d_d_to_N_d_d_3_softmax':cl.layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(7),
-    'layer_channels_dense_res_N_M_d_c':cl.layer_channels_dense_res_N_M_d_c,
-    'data_N_M_d_c_to_cov_N_c_d_d':cl.data_N_M_d_c_to_cov_N_c_d_d,
-    'layer_N_C_d_d_bilinear_attention1': cl.MultiHeadAttention_N_C_d_d_bilinear(num_heads=2),
-    'layer_N_C_d_d_spd_activation1': cl.layer_N_C_d_d_spd_activation_scaled(N_exp=3),
+    'layer_N_C_d_d_bilinear_attention_cov2cor_spd': cl.layer_N_C_d_d_bilinear_attention_cov2cor_spd,
+    'layer_N_C_d_d_spd_activation_scaled': cl.layer_N_C_d_d_spd_activation_scaled,
+    'data_N_M_d_c_to_cov_N_c_d_d': cl.data_N_M_d_c_to_cov_N_c_d_d,
     'frob': cl.frob,
+    'layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2': cl.layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2,
+    'layer_channels_dense_res_N_M_d_c': cl.layer_channels_dense_res_N_M_d_c,
     'lam_init_eps': cl.lam_init_eps,
+    'SoftPDmax_additiveScale_N_c_d_d': cl.SoftPDmax_additiveScale_N_c_d_d,
     'l1_constraintLessEqual': cl.l1_constraintLessEqual,
-    'layer_N_M_d_1_to_N_x_x_C_conv': cl.layer_N_M_d_1_to_N_x_x_C_conv(out_filters=100),
-    'layer_N_c_d_d_to_N_d_d_3_LogEig': cl.layer_N_c_d_d_to_N_d_d_3_LogEig(7),
-    'layer_dense': cl.layer_dense(7),
-    'layer_softmax2': cl.layer_softmax2(7),
-    'layer_baseline': cl.baseline
+    'l1_constraint_columns': cl.l1_constraint_columns,
+    'MultiHeadAttention_N_M_d_C_Feature': cl.MultiHeadAttention_N_M_d_C_Feature,
+    'MultiHeadAttention_N_M_d_C_Sample': cl.MultiHeadAttention_N_M_d_C_Sample,
+    'MultiHeadAttention_N_C_d_d_bilinear': cl.MultiHeadAttention_N_C_d_d_bilinear,
+    'matrixNormalization_N_d_d_c': cl.matrixNormalization_N_d_d_c,
+    'observationalNormalization_N_M_d_c': cl.observationalNormalization_N_M_d_c
 }
 
 # load the pretrained model
-model = tf.keras.models.load_model('./model/BAM_last.hd5', custom_objects=custom_objects)
-# model = tf.keras.models.load_model('./model/BAM_best.hd5', custom_objects=custom_objects)
+# model = tf.keras.models.load_model('./model/BAM_last.hd5', custom_objects=custom_objects)
+model = tf.keras.models.load_model('./model/BAM_best.hd5', custom_objects=custom_objects)
 
 # pixels, classes_true = data_loader.load_test_set('./dataset/test_short.csv')
 
@@ -74,7 +83,7 @@ def switch_data(case_value):
     return img_folder, csv_folder, classes, label
 
 
-img_folder, csv_folder, classes, label = switch_data(4)
+img_folder, csv_folder, classes, label = switch_data(3)
 
 # standard_size = (48, 48)  # [image_height, image_width]
 standard_size = (100, 100)  # [image_height, image_width]
@@ -86,10 +95,10 @@ pixels_array = np.array(pixels, dtype=np.float32)
 pixels_array = pixels_array.reshape((len(pixels_array), standard_size[0], standard_size[1]))
 
 # """ evaluate using model.evaluate
-# img_gen = generator_image.DataGenerator_image(img_folder, classes_true, names, batch_size=128, num_classes=len(classes))
-# evaluation = model.evaluate(img_gen)
+img_gen = generator_image.DataGenerator_image(img_folder, classes_true, names, batch_size=128, num_classes=len(classes))
+evaluation = model.evaluate(img_gen)
 
-# """ evaluate using model.predict
+""" evaluate using model.predict
 predictions = model.predict(pixels_array)
 for prediction in predictions:
     predicted_class = np.argmax(prediction)     # find the most possible class for each image

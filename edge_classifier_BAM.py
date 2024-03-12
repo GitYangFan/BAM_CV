@@ -16,7 +16,7 @@ tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
 
 num_class = 7
-model = cl.model_attention_final(n_channels_main=100, data_layers=0, cov_layers=1, inner_channels=100, N_exp=3,
+model = cl.model_attention_final(n_channels_main=256, data_layers=0, cov_layers=1, inner_channels=100, N_exp=3,
                                  N_heads=1, num_classes=num_class)      # Note: n_channels_main must be an integer multiple of N_heads
 
 # inputs = tf.keras.Input((None, None))
@@ -93,7 +93,7 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(
 # create a EarlyStopping callback
 early_stopping = tf.keras.callbacks.EarlyStopping(
     monitor='val_loss',     # monitering the loss on the validation set
-    patience=100,           # stop when the val_loss not decreases in the last 100 epoch
+    patience=20,           # stop when the val_loss not decreases in the last 100 epoch
     restore_best_weights=True
 )
 
