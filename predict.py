@@ -94,19 +94,22 @@ classes_pred = []
 pixels_array = np.array(pixels, dtype=np.float32)
 pixels_array = pixels_array.reshape((len(pixels_array), standard_size[0], standard_size[1]))
 
-# """ evaluate using model.evaluate
-img_gen = generator_image.DataGenerator_image(img_folder, classes_true, names, batch_size=128, num_classes=len(classes))
-evaluation = model.evaluate(img_gen)
-
-""" evaluate using model.predict
-predictions = model.predict(pixels_array)
+# Prediction start!
+batch_size = 1
+img_gen = generator_image.DataGenerator_image(img_folder, classes_true, names, batch_size=batch_size, num_classes=len(classes))
+# evaluation = model.evaluate(img_gen)  # evaluate using model.evaluate
+predictions = model.predict(img_gen)    # evaluate using model.predict
+len_pred = len(predictions)
+classes_true_cut = classes_true[0:len_pred]
+print(len_pred, 'images has been classified! ')
+print('batch_size:', batch_size)
 for prediction in predictions:
     predicted_class = np.argmax(prediction)     # find the most possible class for each image
     # print('possibility:', prediction, 'class:', predicted_class)
     classes_pred.append(predicted_class)
 
 print('classes_pred:', classes_pred)
-print('classes_true:', classes_true)
+print('classes_true:', classes_true[0:len_pred])
 
 # predictions = model.predict(pixels)
 
@@ -114,12 +117,12 @@ print('classes_true:', classes_true)
 
 # print(len(classes_true))
 # print(len(classes_pred))
-print('accuracy:', sk.accuracy_score(classes_true, classes_pred))
-print('precision:', sk.precision_score(classes_true, classes_pred, average='macro'))
-print('recall:', sk.recall_score(classes_true, classes_pred, average='macro'))
-print('f1-score:', sk.f1_score(classes_true, classes_pred, average='macro'))
+print('accuracy:', sk.accuracy_score(classes_true_cut, classes_pred))
+print('precision:', sk.precision_score(classes_true_cut, classes_pred, average='macro'))
+print('recall:', sk.recall_score(classes_true_cut, classes_pred, average='macro'))
+print('f1-score:', sk.f1_score(classes_true_cut, classes_pred, average='macro'))
 
-confusion_matrix = sk.confusion_matrix(classes_true, classes_pred)
+confusion_matrix = sk.confusion_matrix(classes_true_cut, classes_pred)
 num_class = confusion_matrix.sum(axis=1, keepdims=True)
 print('num_class:', num_class.T)
 confusion_matrix_prop = confusion_matrix / num_class.astype(float)   # compute the proportion of correct predictions for each class
@@ -140,5 +143,3 @@ plt.title('Confusion Matrix (count)')
 
 plt.savefig('confusion_matrix.png')
 # plt.show()
-
-# """
