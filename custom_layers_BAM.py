@@ -55,7 +55,7 @@ class model_attention_final(tf.keras.Model):
         # self.layer_N_c_d_d_to_N_d_d_3_softmax = layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(self.num_classes)
         # self.layer_N_c_d_d_to_N_d_d_3_LogEig = layer_N_c_d_d_to_N_d_d_3_LogEig(self.num_classes)
         # self.layer_softmax2 = layer_softmax2(self.num_classes)
-        # self.layer_baseline = baseline()
+        self.layer_baseline = baseline(self.n_channels_main)
         self.layer_dense = layer_dense(self.num_classes)
 
     def call(self, inputs, **kwargs):
@@ -102,8 +102,8 @@ class model_attention_final(tf.keras.Model):
 
         # here throw out softmax output and keep shape [N,width,width,C]
         # # option 1: baseline
-        # cov_baseline = self.layer_baseline(conv1)
-        # final_output = self.layer_dense(cov_baseline)
+        cov_baseline = self.layer_baseline(conv1)
+        final_output = self.layer_dense(cov_baseline)
 
         # # option 2: BAM original softmax
         # cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
@@ -112,10 +112,10 @@ class model_attention_final(tf.keras.Model):
 
         # option 3: BAM modified LogEig with dense
         # cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
-        cov_euklidean = cal_logeig(out)
+        # cov_euklidean = cal_logeig(out)
         # cov_euklidean = _cal_log_cov(out_reshape)
         # fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
-        final_output = self.layer_dense(conv1)
+        # final_output = self.layer_dense(cov_euklidean)
         # final_output = self.layer_softmax2(conv1)
         return final_output
 
@@ -163,10 +163,10 @@ class baseline(tf.keras.layers.Layer):
     baseline layers
     """
 
-    def __init__(self, **kwargs):
-        super(baseline, self).__init__(**kwargs)
-        self.s1 = 100
-        self.s2 = 50
+    def __init__(self, n_channels=256):
+        super(baseline, self).__init__()
+        self.s1 = n_channels
+        self.s2 = n_channels // 2
 
     def build(self, input_shape):
         self.w0 = self.add_weight(
@@ -247,7 +247,7 @@ class baseline(tf.keras.layers.Layer):
         return features_t
 
 
-class layer_dense(tf.keras.Model):  # reduce the complexity of img
+class layer_dense(tf.keras.layers.Layer):  # output the classes
     def __init__(self, num_classes=7):
         super(layer_dense, self).__init__()
         self.flatten = tf.keras.layers.Flatten()
@@ -263,9 +263,10 @@ class layer_dense(tf.keras.Model):  # reduce the complexity of img
         self.model = tf.keras.Sequential(self.dense_layers)
 
     def call(self, inputs):
-        # inputs_flatten = self.flatten(inputs)
-        inputs_flatten = tf.reshape(inputs, shape=(-1, tf.shape(inputs)[1] * tf.shape(inputs)[2] * tf.shape(inputs)[3]))
-        return self.model(inputs_flatten)
+        inputs_flatten = self.flatten(inputs)
+        # inputs_flatten = tf.reshape(inputs, shape=(-1, tf.shape(inputs)[1] * tf.shape(inputs)[2] * tf.shape(inputs)[3]))
+        conv = self.model(inputs_flatten)
+        return conv
 
 
 def feature_fusion(tensor1, tensor2, weight1=1, weight2=1):
@@ -342,7 +343,7 @@ def _cal_cov_pooling(input):
     return cov_expand
 
 
-class layer_N_M_d_1_to_N_x_x_C_conv(tf.keras.Model):  # reduce the complexity of img
+class layer_N_M_d_1_to_N_x_x_C_conv(tf.keras.layers.Layer):  # reduce the complexity of img
     def __init__(self, out_filters):
         super(layer_N_M_d_1_to_N_x_x_C_conv, self).__init__()
         self.conv_layers = []
