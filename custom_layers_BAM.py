@@ -263,8 +263,8 @@ class layer_dense(tf.keras.Model):  # reduce the complexity of img
         self.model = tf.keras.Sequential(self.dense_layers)
 
     def call(self, inputs):
-        inputs_flatten = self.flatten(inputs)
-        # inputs_flatten = tf.reshape(inputs, shape=(-1, tf.shape(inputs)[1] * tf.shape(inputs)[2] * tf.shape(inputs)[3]))
+        # inputs_flatten = self.flatten(inputs)
+        inputs_flatten = tf.reshape(inputs, shape=(-1, tf.shape(inputs)[1] * tf.shape(inputs)[2] * tf.shape(inputs)[3]))
         return self.model(inputs_flatten)
 
 
