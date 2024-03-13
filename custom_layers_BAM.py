@@ -33,6 +33,7 @@ class model_attention_final(tf.keras.Model):
         self.n_channels_main = n_channels_main
         self.N_exp = N_exp
         self.N_heads = N_heads
+        self.num_classes = num_classes
         self.weight1 = tf.Variable(initial_value=1, trainable=True, name='weight1', dtype=tf.float32)
         self.weight2 = tf.Variable(initial_value=1, trainable=True, name='weight2', dtype=tf.float32)
         # self.layer_N_M_d_1_to_N_M_d_C_residual = layer_N_M_d_1_to_N_M_d_C_residual(
@@ -51,11 +52,11 @@ class model_attention_final(tf.keras.Model):
             setattr(self, f"layer_N_C_d_d_spd_activation{l}",
                     layer_N_C_d_d_spd_activation_scaled(N_exp=self.N_exp))
         self.layer_N_M_d_1_to_N_x_x_C_conv = layer_N_M_d_1_to_N_x_x_C_conv(out_filters=self.n_channels_main)
-        # self.layer_N_c_d_d_to_N_d_d_3_softmax = layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(num_classes)
-        # self.layer_N_c_d_d_to_N_d_d_3_LogEig = layer_N_c_d_d_to_N_d_d_3_LogEig(num_classes)
-        # self.layer_softmax2 = layer_softmax2(num_classes)
+        # self.layer_N_c_d_d_to_N_d_d_3_softmax = layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(self.num_classes)
+        # self.layer_N_c_d_d_to_N_d_d_3_LogEig = layer_N_c_d_d_to_N_d_d_3_LogEig(self.num_classes)
+        # self.layer_softmax2 = layer_softmax2(self.num_classes)
         # self.layer_baseline = baseline()
-        self.layer_dense = layer_dense(num_classes)
+        self.layer_dense = layer_dense(self.num_classes)
 
     def call(self, inputs, **kwargs):
         M = tf.shape(inputs)[1]
@@ -114,7 +115,8 @@ class model_attention_final(tf.keras.Model):
         cov_euklidean = cal_logeig(out)
         # cov_euklidean = _cal_log_cov(out_reshape)
         # fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
-        final_output = self.layer_dense(cov_euklidean)
+        final_output = self.layer_dense(conv1)
+        # final_output = self.layer_softmax2(conv1)
         return final_output
 
     def get_config(self):
@@ -262,6 +264,7 @@ class layer_dense(tf.keras.Model):  # reduce the complexity of img
 
     def call(self, inputs):
         inputs_flatten = self.flatten(inputs)
+        # inputs_flatten = tf.reshape(inputs, shape=(-1, tf.shape(inputs)[1] * tf.shape(inputs)[2] * tf.shape(inputs)[3]))
         return self.model(inputs_flatten)
 
 
