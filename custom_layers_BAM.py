@@ -344,7 +344,7 @@ def _cal_cov_pooling(input):
 
 
 class layer_N_M_d_1_to_N_x_x_C_conv(tf.keras.layers.Layer):  # reduce the complexity of img
-    def __init__(self, out_filters):
+    def __init__(self, out_filters=256):
         super(layer_N_M_d_1_to_N_x_x_C_conv, self).__init__()
         self.conv_layers = []
         # define the CNN architecture
