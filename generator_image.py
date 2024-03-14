@@ -36,8 +36,8 @@ class DataGenerator_image(tf.keras.utils.Sequence):
         start = index * self.batch_size
         end = (index + 1) * self.batch_size
 
-        standard_size = (48, 48)  # [image_height, image_width]
-        # standard_size = (100, 100)  # [image_height, image_width]
+        # standard_size = (48, 48)  # [image_height, image_width]
+        standard_size = (100, 100)  # [image_height, image_width]
         batch_pixels = data_loader.load_img(self.folder, self.img_names, start, end, standard_size)
 
         # check if there is enough img in the batch

@@ -102,8 +102,8 @@ class model_attention_final(tf.keras.Model):
 
         # here throw out softmax output and keep shape [N,width,width,C]
         # # option 1: baseline
-        cov_baseline = self.layer_baseline(conv1)
-        final_output = self.layer_dense(cov_baseline)
+        # cov_baseline = self.layer_baseline(conv1)
+        # final_output = self.layer_dense(cov_baseline)
 
         # # option 2: BAM original softmax
         # cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
@@ -112,10 +112,10 @@ class model_attention_final(tf.keras.Model):
 
         # option 3: BAM modified LogEig with dense
         # cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
-        # cov_euklidean = cal_logeig(out)
+        cov_euklidean = cal_logeig(out)
         # cov_euklidean = _cal_log_cov(out_reshape)
         # fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
-        # final_output = self.layer_dense(cov_euklidean)
+        final_output = self.layer_dense(cov_euklidean)
         # final_output = self.layer_softmax2(conv1)
         return final_output
 
@@ -137,6 +137,10 @@ class model_attention_final(tf.keras.Model):
 
 
 def cal_logeig(features):
+    """
+    Modeified LogEig layer based on literature
+
+    """
     # features = tf.reduce_mean(features, axis=[1], keepdims=True)
     # features = tf.squeeze(features, [1])
     [s_f, v_f] = tf.linalg.eigh(features)
@@ -150,6 +154,10 @@ def cal_logeig(features):
 
 
 def _cal_log_cov(features):
+    """
+    Original LogEig from literature
+
+    """
     features = tf.squeeze(features, [1])
     [s_f, v_f] = tf.linalg.eigh(features)
     s_f = tf.math.log(s_f)
