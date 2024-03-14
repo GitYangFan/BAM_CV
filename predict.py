@@ -42,8 +42,8 @@ custom_objects = {
 }
 
 # load the pretrained model
-model = tf.keras.models.load_model('./model/BAM_last.hd5', custom_objects=custom_objects)
-# model = tf.keras.models.load_model('./model/BAM_best.hd5', custom_objects=custom_objects)
+# model = tf.keras.models.load_model('./model/BAM_last.hd5', custom_objects=custom_objects)
+model = tf.keras.models.load_model('./model/BAM_best.hd5', custom_objects=custom_objects)
 
 # pixels, classes_true = data_loader.load_test_set('./dataset/test_short.csv')
 
