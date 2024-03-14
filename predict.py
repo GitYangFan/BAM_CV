@@ -18,7 +18,7 @@ custom_objects = {
     'feature_fusion': cl.feature_fusion,
     'data_N_M_d_c_to_cov_N_C2_C1_C1_image': cl.data_N_M_d_c_to_cov_N_C2_C1_C1_image,
     '_cal_cov_pooling': cl._cal_cov_pooling,
-    'layer_N_M_d_1_to_N_x_x_C_conv': cl.layer_N_M_d_1_to_N_x_x_C_conv,
+    'layer_N_M_d_1_to_N_x_x_C_conv': cl.layer_N_M_d_1_to_N_x_x_C_conv(out_filters=256),
     'layer_N_c_d_d_to_N_d_d_3_LogEig': cl.layer_N_c_d_d_to_N_d_d_3_LogEig,
     'layer_softmax2': cl.layer_softmax2,
     'layer_N_M_d_1_to_N_M_d_C_residual': cl.layer_N_M_d_1_to_N_M_d_C_residual,
