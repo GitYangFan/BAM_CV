@@ -95,7 +95,7 @@ pixels_array = np.array(pixels, dtype=np.float32)
 pixels_array = pixels_array.reshape((len(pixels_array), standard_size[0], standard_size[1]))
 
 # Prediction start!
-batch_size = 1
+batch_size = 64
 img_gen = generator_image.DataGenerator_image(img_folder, classes_true, names, batch_size=batch_size, num_classes=len(classes))
 # evaluation = model.evaluate(img_gen)  # evaluate using model.evaluate
 predictions = model.predict(img_gen)    # evaluate using model.predict
