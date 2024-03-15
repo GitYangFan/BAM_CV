@@ -112,10 +112,10 @@ class model_attention_final(tf.keras.Model):
 
         # option 3: BAM modified LogEig with dense
         # cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
-        cov_euklidean = cal_logeig(out)
+        # cov_euklidean = cal_logeig(out)
         # cov_euklidean = _cal_log_cov(out_reshape)
         # fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
-        final_output = self.layer_dense(cov_euklidean)
+        final_output = self.layer_dense(conv1)
         # final_output = self.layer_softmax2(conv1)
         return final_output
 
