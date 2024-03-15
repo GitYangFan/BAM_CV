@@ -94,7 +94,7 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(
 # create a EarlyStopping callback
 early_stopping = tf.keras.callbacks.EarlyStopping(
     monitor='val_loss',     # monitering the loss on the validation set
-    patience=20,           # stop when the val_loss not decreases in the last 100 epoch
+    patience=50,           # stop when the val_loss not decreases in the last 100 epoch
     restore_best_weights=True
 )
 
