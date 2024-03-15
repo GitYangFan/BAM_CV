@@ -83,7 +83,7 @@ def switch_data(case_value):
     return img_folder, csv_folder, classes, label
 
 
-img_folder, csv_folder, classes, label = switch_data(3)
+img_folder, csv_folder, classes, label = switch_data(5)
 
 # standard_size = (48, 48)  # [image_height, image_width]
 standard_size = (100, 100)  # [image_height, image_width]
