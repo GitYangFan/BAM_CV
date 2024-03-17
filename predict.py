@@ -42,8 +42,8 @@ custom_objects = {
 }
 
 # load the pretrained model
-model = tf.keras.models.load_model('./model/BAM_last.hd5', custom_objects=custom_objects)
-# model = tf.keras.models.load_model('./model/BAM_best.hd5', custom_objects=custom_objects)
+# model = tf.keras.models.load_model('./model/BAM_last.hd5', custom_objects=custom_objects)
+model = tf.keras.models.load_model('./model/BAM_best.hd5', custom_objects=custom_objects)
 
 # pixels, classes_true = data_loader.load_test_set('./dataset/test_short.csv')
 
@@ -83,7 +83,7 @@ def switch_data(case_value):
     return img_folder, csv_folder, classes, label
 
 
-img_folder, csv_folder, classes, label = switch_data(4)
+img_folder, csv_folder, classes, label = switch_data(3)
 
 # standard_size = (48, 48)  # [image_height, image_width]
 standard_size = (100, 100)  # [image_height, image_width]
