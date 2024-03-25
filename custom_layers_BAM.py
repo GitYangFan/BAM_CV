@@ -102,8 +102,8 @@ class model_attention_final(tf.keras.Model):
 
         # here throw out softmax output and keep shape [N,width,width,C]
         # # option 1: baseline
-        # cov_baseline = self.layer_baseline(conv1)
-        # final_output = self.layer_dense(cov_baseline)
+        cov_baseline = self.layer_baseline(conv1)
+        final_output = self.layer_dense(cov_baseline)
 
         # # option 2: BAM original softmax
         # cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
@@ -115,7 +115,7 @@ class model_attention_final(tf.keras.Model):
         # cov_euklidean = cal_logeig(out)
         # cov_euklidean = _cal_log_cov(out_reshape)
         # fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
-        final_output = self.layer_dense(conv1)
+        # final_output = self.layer_dense(cov_euklidean)
         # final_output = self.layer_softmax2(conv1)
         return final_output
 
