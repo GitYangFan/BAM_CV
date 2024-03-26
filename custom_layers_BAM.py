@@ -53,9 +53,9 @@ class model_attention_final(tf.keras.Model):
                     layer_N_C_d_d_spd_activation_scaled(N_exp=self.N_exp))
         self.layer_N_M_d_1_to_N_x_x_C_conv = layer_N_M_d_1_to_N_x_x_C_conv(out_filters=self.n_channels_main)
         # self.layer_N_c_d_d_to_N_d_d_3_softmax = layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2(self.num_classes)
-        # self.layer_N_c_d_d_to_N_d_d_3_LogEig = layer_N_c_d_d_to_N_d_d_3_LogEig(self.num_classes)
+        self.layer_N_c_d_d_to_N_d_d_3_LogEig = layer_N_c_d_d_to_N_d_d_3_LogEig(self.num_classes)
         # self.layer_softmax2 = layer_softmax2(self.num_classes)
-        self.layer_baseline = baseline(self.n_channels_main)
+        # self.layer_baseline = baseline(self.n_channels_main)
         self.layer_dense = layer_dense(self.num_classes)
 
     def call(self, inputs, **kwargs):
@@ -95,15 +95,15 @@ class model_attention_final(tf.keras.Model):
         for l in range(1, self.cov_layers + 1):
             out = getattr(self, f"layer_N_C_d_d_bilinear_attention{l}")(out)
             out = getattr(self, f"layer_N_C_d_d_spd_activation{l}")(out)
-        # out_reshape = tf.reshape(out, shape=(-1, 1, self.n_channels_main, self.n_channels_main))  # shape (N, 1, c, c)
+        out_reshape = tf.reshape(out, shape=(-1, 1, self.n_channels_main, self.n_channels_main))  # shape (N, 1, c, c)
         oout = [out, M]
 
         # cov3 = self.layer_N_c_d_d_to_N_d_d_3_softmax(oout)    #(old version, abandoned)
 
         # here throw out softmax output and keep shape [N,width,width,C]
         # # option 1: baseline
-        cov_baseline = self.layer_baseline(conv1)
-        final_output = self.layer_dense(cov_baseline)
+        # cov_baseline = self.layer_baseline(conv1)
+        # final_output = self.layer_dense(cov_baseline)
 
         # # option 2: BAM original softmax
         # cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
@@ -113,9 +113,9 @@ class model_attention_final(tf.keras.Model):
         # option 3: BAM modified LogEig with dense
         # cov_euklidean = self.layer_N_c_d_d_to_N_d_d_3_LogEig(oout)
         # cov_euklidean = cal_logeig(out)
-        # cov_euklidean = _cal_log_cov(out_reshape)
+        cov_euklidean = _cal_log_cov(out_reshape)
         # fusion = feature_fusion(conv1, cov_euklidean, weight1=self.weight1, weight2=self.weight2)
-        # final_output = self.layer_dense(cov_euklidean)
+        final_output = self.layer_dense(cov_euklidean)
         # final_output = self.layer_softmax2(conv1)
         return final_output
 
@@ -333,6 +333,10 @@ def data_N_M_d_c_to_cov_N_C2_C1_C1_image(input, N_heads=5):
 
 
 def _cal_cov_pooling(input):
+    """
+    Original cov pooling from literature
+
+    """
     features = tf.reshape(input, shape=(-1, tf.shape(input)[1] * tf.shape(input)[2], tf.shape(input)[3]))
     shape_f = tf.shape(features)
     # shape_f[0] = -1
@@ -394,7 +398,7 @@ class layer_N_M_d_1_to_N_x_x_C_conv(tf.keras.layers.Layer):  # reduce the comple
 
 class layer_N_c_d_d_to_N_d_d_3_LogEig(tf.keras.layers.Layer):
     """
-    Applies LogEig layer, calculates probabilities for the 3 output classes
+    Applies LogEig layer, calculates probabilities for the k output classes
     """
 
     def __init__(self, num_classes=7, **kwargs):
