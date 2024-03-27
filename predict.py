@@ -98,7 +98,16 @@ pixels_array = pixels_array.reshape((len(pixels_array), standard_size[0], standa
 batch_size = 64
 img_gen = generator_image.DataGenerator_image(img_folder, classes_true, names, batch_size=batch_size, num_classes=len(classes))
 # evaluation = model.evaluate(img_gen)  # evaluate using model.evaluate
-predictions = model.predict(img_gen)    # evaluate using model.predict
+
+# Soft voting based on multiple predictions
+num_test = 5
+predictions_list = []
+for i in range(1,num_test+1):
+    print(i, 'run of prediction....')
+    prediction = model.predict(img_gen)    # evaluate using model.predict
+    predictions_list.append(prediction)
+predictions = sum(predictions_list)     # Accumulate the probability of each class
+
 len_pred = len(predictions)
 classes_true_cut = classes_true[0:len_pred]
 print(len_pred, 'images has been classified! ')
