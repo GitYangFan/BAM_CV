@@ -100,10 +100,10 @@ img_gen = generator_image.DataGenerator_image(img_folder, classes_true, names, b
 # evaluation = model.evaluate(img_gen)  # evaluate using model.evaluate
 
 # Soft voting based on multiple predictions
-num_test = 5
+num_test = 10
 predictions_list = []
 for i in range(1,num_test+1):
-    print(i, 'run of prediction....')
+    print(i, '/', num_test, 'run of prediction....')
     prediction = model.predict(img_gen)    # evaluate using model.predict
     predictions_list.append(prediction)
 predictions = sum(predictions_list)     # Accumulate the probability of each class
