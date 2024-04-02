@@ -9,6 +9,7 @@ import numpy as np
 tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
 lam_initial = 1
+lam_initial2 = 0.1
 
 
 class model_attention_final(tf.keras.Model):
@@ -849,7 +850,7 @@ class layer_N_C_d_d_bilinear_attention_cov2cor_spd(tf.keras.layers.Layer):
         )
         self.llambda = self.add_weight(
             shape=(self.input_units,),
-            initializer=lam_init_eps(lam_initial),
+            initializer=lam_init_eps(lam_initial2),
             trainable=True,
             dtype=ddtype,
             name="llambda",
