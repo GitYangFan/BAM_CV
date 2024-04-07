@@ -9,7 +9,7 @@ import numpy as np
 tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
 # lam_initial = 1
-lam_initial = 0.01
+lam_initial = 0.1
 
 
 class model_attention_final(tf.keras.Model):
