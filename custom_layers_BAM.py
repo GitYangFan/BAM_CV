@@ -283,7 +283,7 @@ class layer_dense(tf.keras.layers.Layer):  # output the classes
 def feature_fusion(tensor1, tensor2, weight1=1, weight2=1):
     """
     This function is aimed to fusion the first and second dimension features...
-    combine two tensors with different shapes (N, k, k, C) and (N, C1, C1, C2)
+    combine two tensors with different shapes (N, k, k, C) and (N, C, C, 1)
     """
     # feature_pooled1 = tf.reduce_mean(tensor1, axis=[2, 3], keepdims=True)   # shape (N, C, 1, 1)
     # feature_pooled2 = tf.reduce_mean(tensor2, axis=[2, 3], keepdims=True)   # shape (N, C2, 1, 1)
@@ -291,8 +291,9 @@ def feature_fusion(tensor1, tensor2, weight1=1, weight2=1):
     # tensor2_t = tf.transpose(tensor2, [0, 2, 3, 1])  # shape (N, C1, C1, C2)
     # shape1 = tensor1_t.shape
     shape1 = tf.shape(tensor1)
-    tensor2_resize = tf.image.resize(tensor2, (shape1[1], shape1[2]))  # shape (N, k, k, C2)
-    feature_combined = tf.concat([tensor1 * weight1, tensor2_resize * weight2], axis=-1)  # shape (N, k, k, C+C2)
+    tensor2 = tf.reduce_mean(tensor2, axis=[3], keepdims=True)  # shape (N, k, k, 1)
+    tensor2_resize = tf.image.resize(tensor2, (shape1[1], shape1[2]))  # shape (N, C, C, 1)
+    feature_combined = tf.concat([tensor1 * weight1, tensor2_resize * weight2], axis=-1)  # shape (N, C, C, 2)
     # feature_combined_t = tf.transpose(feature_combined, [0, 3, 1, 2])
     return feature_combined
 
