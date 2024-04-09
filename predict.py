@@ -42,8 +42,11 @@ custom_objects = {
 }
 
 # load the pretrained model
+model = {}
 # model = tf.keras.models.load_model('./model/BAM_last.hd5', custom_objects=custom_objects)
-model = tf.keras.models.load_model('./model/BAM_best.hd5', custom_objects=custom_objects)
+model[0] = tf.keras.models.load_model('./model/BAM_best.hd5', custom_objects=custom_objects)
+model[1] = tf.keras.models.load_model('./model2/BAM_best.hd5', custom_objects=custom_objects)
+model[2] = tf.keras.models.load_model('./model3/BAM_best.hd5', custom_objects=custom_objects)
 
 # pixels, classes_true = data_loader.load_test_set('./dataset/test_short.csv')
 
@@ -101,11 +104,14 @@ img_gen = generator_image.DataGenerator_image(img_folder, classes_true, names, b
 
 # Soft voting based on multiple predictions
 num_test = 10
+num_model = 3
 predictions_list = []
-for i in range(1,num_test+1):
-    print(i, '/', num_test, 'run of prediction....')
-    prediction = model.predict(img_gen)    # evaluate using model.predict
-    predictions_list.append(prediction)
+for i in range(0,num_test):
+    print(i, '/', num_test+1, 'run of prediction....')
+    for j in range(0,num_model):
+        print('predict using model', j+1)
+        prediction = model[j].predict(img_gen)    # evaluate using model.predict
+        predictions_list.append(prediction)
 predictions = sum(predictions_list)     # Accumulate the probability of each class
 
 len_pred = len(predictions)
