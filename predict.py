@@ -108,7 +108,7 @@ num_test = 10
 num_model = 3
 predictions_list = []
 for i in range(0,num_test):
-    print(i, '/', num_test+1, 'run of prediction....')
+    print(i+1, '/', num_test, 'run of prediction....')
     for j in range(0,num_model):
         print('predict using model', j+1)
         prediction = model[j].predict(img_gen)    # evaluate using model.predict
