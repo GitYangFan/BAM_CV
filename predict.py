@@ -44,7 +44,8 @@ custom_objects = {
 # load the pretrained model
 model = {}
 # model = tf.keras.models.load_model('./model/BAM_last.hd5', custom_objects=custom_objects)
-model[0] = tf.keras.models.load_model('./model/BAM_best.hd5', custom_objects=custom_objects)
+# model = tf.keras.models.load_model('./model/BAM_best.hd5', custom_objects=custom_objects)
+model[0] = tf.keras.models.load_model('./model1/BAM_best.hd5', custom_objects=custom_objects)
 model[1] = tf.keras.models.load_model('./model2/BAM_best.hd5', custom_objects=custom_objects)
 model[2] = tf.keras.models.load_model('./model3/BAM_best.hd5', custom_objects=custom_objects)
 
