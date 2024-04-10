@@ -36,7 +36,7 @@ class model_attention_final(tf.keras.Model):
         self.N_heads = N_heads
         self.num_classes = num_classes
         self.weight1 = tf.Variable(initial_value=1, trainable=True, name='weight1', dtype=tf.float32)
-        self.weight2 = tf.Variable(initial_value=0.1, trainable=True, name='weight2', dtype=tf.float32)
+        self.weight2 = tf.Variable(initial_value=0, trainable=True, name='weight2', dtype=tf.float32)
         # self.layer_N_M_d_1_to_N_M_d_C_residual = layer_N_M_d_1_to_N_M_d_C_residual(
         #     units_output=self.n_channels_main)
         l: int
