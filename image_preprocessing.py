@@ -26,23 +26,24 @@ def random_rotate_image(image):
 
 def preprocessing(img_gray_array, standard_size):
     # pre whiten
-    img_preprocessing_array = prewhiten(img_gray_array)
+    img_preprocessing_array_prewhiten = prewhiten(img_gray_array)
 
     # random crop (95% of original size)
-    # img_preprocessing = tf.image.random_crop(img_preprocessing, [int(0.95 * image_height), int(0.95 * image_width)])
+    crop_size = 1
+    img_preprocessing_crop = tf.image.random_crop(img_preprocessing_array_prewhiten, [int(crop_size * standard_size[0]), int(crop_size * standard_size[1])])
 
     # random flip left and right
-    img_preprocessing = tf.expand_dims(img_preprocessing_array, axis=-1)
-    img_preprocessing = tf.image.random_flip_left_right(img_preprocessing)
+    img_preprocessing = tf.expand_dims(img_preprocessing_crop, axis=-1)
+    img_preprocessing_flip = tf.image.random_flip_left_right(img_preprocessing)
 
     # random rotate the image
-    img_preprocessing = random_rotate_image(img_preprocessing)
+    img_preprocessing_rotate = random_rotate_image(img_preprocessing_flip)
 
     # standardization
-    img_preprocessing = tf.image.per_image_standardization(img_preprocessing)
-    img_preprocessing = tf.squeeze(img_preprocessing, 2)
+    img_preprocessing_stand = tf.image.per_image_standardization(img_preprocessing_rotate)
+    img_preprocessing = tf.squeeze(img_preprocessing_stand, 2)
 
-    return img_preprocessing
+    return img_preprocessing, img_preprocessing_array_prewhiten, img_preprocessing_crop, img_preprocessing_flip, img_preprocessing_rotate, img_preprocessing_stand
 
 
 def main():

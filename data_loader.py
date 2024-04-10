@@ -95,24 +95,38 @@ def load_img(folder, img_names, start, end, standard_size):
         if os.path.exists(img_path):
             with Image.open(img_path) as img:
                 # convert to grey image
-                img = img.convert('L')
+                img_grey = img.convert('L')
                 # Scale the image to the standard size 48x48 by downsampling
                 # standard_size = (48, 48)
-                img_resized = img.resize(standard_size, Image.LANCZOS)
+                img_resized = img_grey.resize(standard_size, Image.LANCZOS)
                 # convert the img to numpy array
                 img_array = np.array(img_resized)
                 # preprocessing
-                img_array_preprocessed = preprocessing(img_array, standard_size)
+                img_array_preprocessed, img_preprocessing_array_prewhiten, img_preprocessing_crop, img_preprocessing_flip, img_preprocessing_rotate, img_preprocessing_stand = preprocessing(img_array, standard_size)
                 # flatten the img pixels
                 pixels = tf.reshape(img_array_preprocessed, [-1])
                 pixels_list.append(pixels)
 
                 # show the plt before and after process
-                # fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+                # fig, axes = plt.subplots(8, 1, figsize=(5, 15))
                 # axes[0].imshow(img, cmap='gray')
-                # axes[0].set_title('before')
-                # axes[1].imshow(img_resized, cmap='gray')
-                # axes[1].set_title('after')
+                # # axes[0].set_title('raw')
+                # axes[1].imshow(img_grey, cmap='gray')
+                # # axes[1].set_title('gray')
+                # axes[2].imshow(img_resized, cmap='gray')
+                # # axes[2].set_title('resize')
+                # axes[3].imshow(img_preprocessing_array_prewhiten, cmap='gray')
+                # # axes[3].set_title('prewhiten')
+                # axes[4].imshow(img_preprocessing_crop, cmap='gray')
+                # # axes[4].set_title('rand.crop')
+                # axes[5].imshow(img_preprocessing_flip, cmap='gray')
+                # # axes[5].set_title('rand.flip')
+                # axes[6].imshow(img_preprocessing_rotate, cmap='gray')
+                # # axes[6].set_title('rand.rotate')
+                # axes[7].imshow(img_preprocessing_stand, cmap='gray')
+                # # axes[7].set_title('standardization')
+                # for ax in axes:
+                #     ax.axis('off')
                 # plt.show()
         else:
             print(f"Image {img_path} not found.")
@@ -123,8 +137,8 @@ def load_img(folder, img_names, start, end, standard_size):
 
 def show_image_batch(pixels_batch, label_batch):
     img_batch = [tf.reshape(img, (48, 48)).numpy() for img in pixels_batch]
-    rows = 4
-    cols = 4
+    rows = 2
+    cols = 2
     idx = 0
     fig, axes = plt.subplots(rows, cols, figsize=(8, 8))
     # show the image
@@ -143,12 +157,12 @@ def show_image_batch(pixels_batch, label_batch):
 -------- test ------------
 """
 # --------- test the image loader ---------
-# train_folder = './dataset/wiki_crop/image'
-# train_csv_folder = './dataset/wiki_crop/wiki_train.csv'
-# label_list, train_names = load_label(train_csv_folder, label='gender')
-# start = 100
-# end = start + 16
-# pixels_batch = load_img(train_folder, train_names, start, end)
+# train_folder = './dataset/RAF-DB/aligned'
+# train_csv_folder = './dataset/RAF-DB/train_label_shuffled_aligned_idx0.csv'
+# label_list, train_names = load_label(train_csv_folder, label='emotion')
+# start = 250
+# end = start + 10
+# pixels_batch = load_img(train_folder, train_names, start, end, (48, 48))
 # label_batch = label_list[start:end]
 #
 # print('label_batch:', label_batch)

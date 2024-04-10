@@ -43,11 +43,11 @@ custom_objects = {
 
 # load the pretrained model
 model = {}
-# model = tf.keras.models.load_model('./model/BAM_last.hd5', custom_objects=custom_objects)
-# model = tf.keras.models.load_model('./model/BAM_best.hd5', custom_objects=custom_objects)
+# model[0] = tf.keras.models.load_model('./model/BAM_last.hd5', custom_objects=custom_objects)
+# model[0] = tf.keras.models.load_model('./model/BAM_best.hd5', custom_objects=custom_objects)
 model[0] = tf.keras.models.load_model('./model1/BAM_best.hd5', custom_objects=custom_objects)
-model[1] = tf.keras.models.load_model('./model2/BAM_best.hd5', custom_objects=custom_objects)
-model[2] = tf.keras.models.load_model('./model3/BAM_best.hd5', custom_objects=custom_objects)
+# model[1] = tf.keras.models.load_model('./model2/BAM_best.hd5', custom_objects=custom_objects)
+# model[2] = tf.keras.models.load_model('./model3/BAM_best.hd5', custom_objects=custom_objects)
 
 # pixels, classes_true = data_loader.load_test_set('./dataset/test_short.csv')
 
@@ -105,7 +105,7 @@ img_gen = generator_image.DataGenerator_image(img_folder, classes_true, names, b
 
 # Soft voting based on multiple predictions
 num_test = 10
-num_model = 3
+num_model = len(model)
 predictions_list = []
 for i in range(0,num_test):
     print(i+1, '/', num_test, 'run of prediction....')
