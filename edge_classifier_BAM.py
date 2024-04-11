@@ -2,7 +2,7 @@ import time
 
 import tensorflow as tf
 
-import custom_layers_BAM as cl
+import custom_layers_BAM_new as cl
 import numpy as np
 import generator_cheby_BAM as genC
 import generator_image
