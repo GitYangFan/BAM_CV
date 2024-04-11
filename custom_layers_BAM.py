@@ -117,8 +117,8 @@ class model_attention_final(tf.keras.Model):
         cov_euklidean = _cal_log_cov(out_reshape)
         shape_cov = tf.shape(cov_euklidean)
         cov_euklidean_reshape = tf.reshape(cov_euklidean, shape=(shape_cov[0], shape_cov[1], shape_cov[2], 1))  # shape (N, c, c, 1)
-        fusion = feature_fusion(cov_euklidean_reshape, conv1, weight1=self.weight1, weight2=self.weight2)   # resize 2nd tensor to fit 1st tensor
-        final_output = self.layer_dense(fusion)
+        # fusion = feature_fusion(cov_euklidean_reshape, conv1, weight1=self.weight1, weight2=self.weight2)   # resize 2nd tensor to fit 1st tensor
+        final_output = self.layer_dense(cov_euklidean)
         # final_output = self.layer_softmax2(conv1)
         return final_output
 
