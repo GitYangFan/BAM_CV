@@ -21,6 +21,7 @@ model = cl.model_attention_final(n_channels_main=256, data_layers=0, cov_layers=
 
 # inputs = tf.keras.Input((None, None))
 inputs = tf.keras.Input((100, 100))
+# inputs = tf.keras.Input((48, 48))
 # inputs = tf.keras.Input(shape=(48, 48), batch_size=32)
 outputs = model(inputs)
 # print('outputs:', outputs)
