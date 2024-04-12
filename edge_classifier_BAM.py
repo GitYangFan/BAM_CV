@@ -19,7 +19,7 @@ num_class = 7
 model = cl.model_attention_final(n_channels_main=256, data_layers=0, cov_layers=2, inner_channels=256, N_exp=3,
                                  N_heads=1, num_classes=num_class)      # Note: n_channels_main must be an integer multiple of N_heads
 
-batch_size = 32
+batch_size = 8
 # batch_size = 128
 # inputs = tf.keras.Input((None, None))
 inputs = tf.keras.Input((100, 100), batch_size=batch_size)
