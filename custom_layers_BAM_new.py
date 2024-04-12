@@ -31,7 +31,7 @@ class model_attention_final(tf.keras.Model):
         N_heads (int): Number of heads for the multi-head attention mechanisms.
     """
 
-    def __init__(self, n_channels_main=10,n_channels2=20, data_layers=2, cov_layers=4, inner_channels=10, N_exp=3, N_heads=5,
+    def __init__(self, n_channels_main=16,n_channels2=16, data_layers=2, cov_layers=4, inner_channels=10, N_exp=3, N_heads=5,
                  num_classes=7):
         super(model_attention_final, self).__init__()
         self.n_channels2=n_channels2
