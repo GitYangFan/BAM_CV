@@ -31,9 +31,10 @@ class model_attention_final(tf.keras.Model):
         N_heads (int): Number of heads for the multi-head attention mechanisms.
     """
 
-    def __init__(self, n_channels_main=10, data_layers=2, cov_layers=4, inner_channels=10, N_exp=3, N_heads=5,
+    def __init__(self, n_channels_main=10,n_channels2=20, data_layers=2, cov_layers=4, inner_channels=10, N_exp=3, N_heads=5,
                  num_classes=7):
         super(model_attention_final, self).__init__()
+        self.n_channels2=n_channels2
         self.data_layers = data_layers
         self.cov_layers = cov_layers
         self.inner_channels = inner_channels
@@ -49,8 +50,8 @@ class model_attention_final(tf.keras.Model):
                     MultiHeadAttention_N_C_d_d_bilinear(num_heads=self.N_heads))
             setattr(self, f"layer_N_C_d_d_spd_activation{l}",
                     layer_N_C_d_d_spd_activation_scaled(N_exp=self.N_exp))
-        self.layer_N_M_d_1_to_N_x_x_C_conv = layer_N_M_d_1_to_N_x_x_C_conv(out_filters=self.n_channels_main)
-        self.layer_dense = layer_dense(self.num_classes)
+        self.layer_N_M_d_1_to_N_x_x_C_conv = layer_N_M_d_1_to_N_x_x_C_conv(out_filters=self.n_channels_main*n_channels2)
+        self.layer_dense = layer_dense2(self.num_classes)
 
     def call(self, inputs, **kwargs):
         out = tf.expand_dims(inputs, 3)
@@ -64,13 +65,22 @@ class model_attention_final(tf.keras.Model):
         # add some image attention layers here
         conv1 = self.layer_N_M_d_1_to_N_x_x_C_conv(out)  # reduce the complexity       # shape (N, k, k, C)
         # image_representation = tf.transpose(conv1, [0, 3, 1, 2])  # shape (N, C, k, k)
+        sliced_matrices = tf.split(conv1, num_or_size_splits=self.n_channels2, axis=-1)
+        outputs = []
 
-        cov_base = _cal_cov_pooling(conv1)  # shape (N, 1, c, c)
-        out = cov_base  # model2: covariance matrix - shape (N, C2, C1, C1)
+        # Iterate over each matrix, apply _cal_cov_pooling, and collect outputs
+        for matrix in sliced_matrices:
+            output = _cal_cov_pooling(matrix)[:,0,:,:]
+            outputs.append(output)
+
+        stacked_outputs = tf.stack(outputs, axis=1)
+
+        #cov_base = _cal_cov_pooling(conv1)  # shape (N, 1, c, c)
+        out = stacked_outputs  # model2: covariance matrix - shape (N, C2, C1, C1)
         for l in range(1, self.cov_layers + 1):
             out = getattr(self, f"layer_N_C_d_d_bilinear_attention{l}")(out)
             out = getattr(self, f"layer_N_C_d_d_spd_activation{l}")(out)
-        out_reshape = tf.reshape(out, shape=(-1, 1, self.n_channels_main, self.n_channels_main))  # shape (N, 1, c, c)
+        out_reshape = tf.reshape(out, shape=(-1, self.n_channels2, self.n_channels_main, self.n_channels_main))  # shape (N, 1, c, c)
 
         # here throw out softmax output and keep shape [N,width,width,C]
         # # option 1: baseline
@@ -83,11 +93,41 @@ class model_attention_final(tf.keras.Model):
 
         # option 3: BAM modified LogEig with dense
         # cov_euklidean = cal_logeig(out)
-        cov_euklidean = _cal_log_cov(out_reshape)
-        shape_cov = tf.shape(cov_euklidean)
-        cov_euklidean_reshape = tf.reshape(cov_euklidean, shape=(shape_cov[0], shape_cov[1], shape_cov[2], 1))  # shape (N, c, c, 1)
-        fusion = feature_fusion(cov_euklidean_reshape, conv1, weight1=self.weight1, weight2=self.weight2)   # resize 2nd tensor to fit 1st tensor
-        final_output = self.layer_dense(cov_euklidean)
+        #cov_euklidean = _cal_log_cov(out_reshape)
+
+        outputs_cov = []
+
+        # Iterate over the C2 dimension
+        for i in range(self.n_channels2):
+            # Extract the slice for each i, keeping the dimensions compatible with _cal_log_cov
+            # This slice has shape [N, C1, C1], but we need to add an extra dimension to match the expected input shape [N, 1, C1, C1]
+            slice_i = tf.expand_dims(out_reshape[:, i, :, :], axis=1)
+
+            # Apply the function
+            output_i = _cal_log_cov(slice_i)
+
+            # Collect the outputs
+            outputs_cov.append(output_i)
+
+        # Stack the outputs along the axis corresponding to C2 (axis=1 here, since the outputs are [N, 1, C1, C1])
+        # Resulting in a shape [N, C2, C1, C1] as the original out_reshape tensor
+        reconstructed_tensor = tf.stack(outputs_cov, axis=1)
+
+        shape_conv1=tf.shape(conv1)
+        conv2=tf.reshape(conv1,shape=(shape_conv1[0],shape_conv1[1]*shape_conv1[2],shape_conv1[3]))
+        # conv2 has shape [N, k*k, n_channels_main*n_channels2]
+        # reconstructed_tensor2=tf.reshape(reconstructed_tensor,shape=(shape_conv1[0],shape_conv1[1]*shape_conv1[2],self.n_channels_main,self.n_channels2))
+
+
+        shape_cov = tf.shape(reconstructed_tensor)
+        cov2=tf.transpose(reconstructed_tensor,[0,2,1,3])
+        cov3=tf.reshape(cov2,[shape_cov[0],shape_cov[2],shape_cov[1]*shape_cov[3]])
+
+
+        fusion = tf.concat([cov3,conv2],axis=1)
+        fusion_shape=tf.shape(fusion)
+        fusion2=tf.reshape(fusion,shape=(fusion_shape[0],-1))
+        final_output = self.layer_dense(fusion2)
         # final_output = self.layer_softmax2(conv1)
         return final_output
 
@@ -247,6 +287,28 @@ class layer_dense(tf.keras.layers.Layer):  # output the classes
         # inputs_flatten = tf.reshape(inputs, shape=(-1, tf.shape(inputs)[1] * tf.shape(inputs)[2] * tf.shape(inputs)[3]))
         conv = self.model(inputs_flatten)
         return conv
+
+
+class layer_dense2(tf.keras.layers.Layer):  # output the classes
+    def __init__(self, num_classes=7):
+        super(layer_dense2, self).__init__()
+        self.dense_layers = []
+
+        self.dense_layers.append(tf.keras.layers.Dense(2000, activation=None, name='fc_1'))
+        self.dense_layers.append(tf.keras.layers.Activation('relu'))
+        self.dense_layers.append(tf.keras.layers.Dense(128, activation=None, name='fc_2'))
+        self.dense_layers.append(tf.keras.layers.Activation('relu'))
+        self.dense_layers.append(tf.keras.layers.Dense(num_classes, activation='softmax', name='Bottleneck'))
+
+        # combine the dense layers together
+        self.linear_model = tf.keras.Sequential(self.dense_layers)
+
+    def call(self, inputs):
+        # inputs_flatten = self.flatten(inputs)
+        # inputs_flatten = tf.reshape(inputs, shape=(-1, tf.shape(inputs)[1] * tf.shape(inputs)[2] * tf.shape(inputs)[3]))
+        conv = self.linear_model(inputs)
+        return conv
+
 
 
 def feature_fusion(tensor1, tensor2, weight1=1, weight2=1):

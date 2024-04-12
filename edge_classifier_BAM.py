@@ -2,7 +2,7 @@ import time
 
 import tensorflow as tf
 
-import custom_layers_BAM as cl
+import custom_layers_BAM_new as cl
 import numpy as np
 import generator_cheby_BAM as genC
 import generator_image
@@ -20,7 +20,7 @@ model = cl.model_attention_final(n_channels_main=256, data_layers=0, cov_layers=
                                  N_heads=1, num_classes=num_class)      # Note: n_channels_main must be an integer multiple of N_heads
 
 # inputs = tf.keras.Input((None, None))
-inputs = tf.keras.Input((100, 100))
+inputs = tf.keras.Input((100, 100), batch_size=128)
 # inputs = tf.keras.Input((48, 48))
 # inputs = tf.keras.Input(shape=(48, 48), batch_size=32)
 outputs = model(inputs)
