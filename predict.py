@@ -6,8 +6,13 @@ import seaborn as sns
 import data_loader
 import custom_layers_BAM_new as cl
 import generator_image
-from grad_CAM import grad_cam
+from grad_CAM2 import grad_cam_BAM
 import cv2
+from tensorflow.keras.applications.resnet50 import (
+    ResNet50,
+    preprocess_input,
+    decode_predictions,
+)
 
 tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
@@ -65,8 +70,8 @@ custom_objects = {
 
 # load the pretrained model
 model = {}
-model[0] = tf.keras.models.load_model('./model/BAM_last.hd5', custom_objects=custom_objects)
-# model[0] = tf.keras.models.load_model('./model/BAM_best.hd5', custom_objects=custom_objects)
+# model[0] = tf.keras.models.load_model('./model/BAM_last.hd5', custom_objects=custom_objects)
+model[0] = tf.keras.models.load_model('./model/BAM_best.hd5', custom_objects=custom_objects)
 # model[0] = tf.keras.models.load_model('./model1/BAM_best.hd5', custom_objects=custom_objects)
 # model[1] = tf.keras.models.load_model('./model2/BAM_best.hd5', custom_objects=custom_objects)
 # model[2] = tf.keras.models.load_model('./model3/BAM_best.hd5', custom_objects=custom_objects)
@@ -114,18 +119,18 @@ img_folder, csv_folder, classes, label = switch_data(3)
 # standard_size = (48, 48)  # [image_height, image_width]
 standard_size = (100, 100)  # [image_height, image_width]
 classes_true, names = data_loader.load_label(csv_folder, label)
-# pixels = data_loader.load_img(img_folder, names, 0, len(classes_true), standard_size)
+# pixels = data_loader.load_img(img_folder, names, 0, 10, standard_size)
 # pixels_array = np.array(pixels, dtype=np.float32)
 # pixels_array = pixels_array.reshape((len(pixels_array), standard_size[0], standard_size[1]))
 
 classes_pred = []
 # Prediction start!
-batch_size = 16
+batch_size = 1
 img_gen = generator_image.DataGenerator_image(img_folder, classes_true, names, batch_size=batch_size, num_classes=len(classes))
 # evaluation = model.evaluate(img_gen)  # evaluate using model.evaluate
 
 # Soft voting based on multiple predictions
-num_test = 10
+num_test = 1
 num_model = len(model)
 predictions_list = []
 for i in range(0,num_test):
@@ -133,7 +138,7 @@ for i in range(0,num_test):
     for j in range(0,num_model):
         print('predict using model', j+1)
         # prediction = model[j].predict(img_gen.__getitem__(0)[0])    # evaluate using model.predict
-        prediction = model[j].predict(img_gen)  # evaluate using model.predict
+        prediction = model[j].predict(img_gen.__getitem__(0)[0])  # evaluate using model.predict
         predictions_list.append(prediction)
 predictions = sum(predictions_list)     # Accumulate the probability of each class
 
@@ -149,8 +154,10 @@ for prediction in predictions:
 print('classes_pred:', classes_pred)
 print('classes_true:', classes_true[0:len_pred])
 
-# cam, heatmap = grad_cam(model[0], img_gen.__getitem__(0)[0], classes_pred, "block5_conv3")
+# cam, heatmap = grad_cam(model[0], img_gen.__getitem__(0)[0][0], classes_pred, "block5_conv3")
 # cv2.imwrite("gradcam.jpg", cam)
+
+grad_cam_BAM(model[0], img_gen.__getitem__(30)[0], standard_size)
 
 # predictions = model.predict(pixels)
 
