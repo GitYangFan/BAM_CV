@@ -31,7 +31,8 @@ inputs = tf.keras.Input((100, 100), batch_size=batch_size)
 # inputs = tf.keras.Input(shape=(48, 48), batch_size=32)
 outputs = model(inputs)
 # print('outputs:', outputs)
-modell = tf.keras.Model(inputs, outputs)
+# modell = tf.keras.Model(inputs, outputs)
+modell = model
 
 # modell.compile(
 #     loss=h.my_loss_categorical_penalty,
