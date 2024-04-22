@@ -43,7 +43,7 @@ def grad_cam(model, image):
     plt.savefig('grad_cam.png')
 
 
-def grad_cam_BAM(model, image, img_size):
+def grad_cam_BAM(model, image, img_size, img_idx):
     last_conv_layer = model.get_layer("model_attention_final")
     inputs_init = tf.keras.Input((100, 100), batch_size=1)
     out_conv = last_conv_layer(inputs_init)
@@ -72,12 +72,17 @@ def grad_cam_BAM(model, image, img_size):
     # Clip the values (equivalent to applying ReLU)
     # and then normalise the values
     gradcam = np.clip(gradcam, 0, np.max(gradcam)) / np.max(gradcam)
-    gradcam_cut = gradcam[:, 0:13*13]
+    gradcam_cut = gradcam[:, 0:13*13]   # only take the CNN part after fusion layer
     gradcam_2D = gradcam_cut.reshape((13, 13))
     gradcam_plot = cv2.resize(gradcam_2D, img_size)
     plt.imshow(image[0], cmap='gray')
+    plt.axis('off')
+    file_name_orig = f'./grad_cam/grad_cam_{img_idx}_orig.png'
+    plt.savefig(file_name_orig)
     plt.imshow(gradcam_plot, alpha=0.5)
-    plt.savefig('grad_cam.png')
+    plt.axis('off')
+    file_name = f'./grad_cam/grad_cam_{img_idx}.png'
+    plt.savefig(file_name)
 
 
 # image = np.array(load_img("./data/cat.jpg", target_size=(224, 224, 3)))

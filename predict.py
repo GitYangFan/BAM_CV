@@ -6,6 +6,7 @@ import seaborn as sns
 import data_loader
 import custom_layers_BAM_new as cl
 import generator_image
+import csv
 from grad_CAM2 import grad_cam_BAM
 import cv2
 from tensorflow.keras.applications.resnet50 import (
@@ -125,20 +126,20 @@ classes_true, names = data_loader.load_label(csv_folder, label)
 
 classes_pred = []
 # Prediction start!
-batch_size = 1
+batch_size = 32
 img_gen = generator_image.DataGenerator_image(img_folder, classes_true, names, batch_size=batch_size, num_classes=len(classes))
 # evaluation = model.evaluate(img_gen)  # evaluate using model.evaluate
 
 # Soft voting based on multiple predictions
-num_test = 1
+num_test = 10
 num_model = len(model)
 predictions_list = []
+prediction = []
 for i in range(0,num_test):
     print(i+1, '/', num_test, 'run of prediction....')
     for j in range(0,num_model):
         print('predict using model', j+1)
-        # prediction = model[j].predict(img_gen.__getitem__(0)[0])    # evaluate using model.predict
-        prediction = model[j].predict(img_gen.__getitem__(0)[0])  # evaluate using model.predict
+        prediction = model[j].predict(img_gen)    # evaluate using model.predict
         predictions_list.append(prediction)
 predictions = sum(predictions_list)     # Accumulate the probability of each class
 
@@ -157,7 +158,11 @@ print('classes_true:', classes_true[0:len_pred])
 # cam, heatmap = grad_cam(model[0], img_gen.__getitem__(0)[0][0], classes_pred, "block5_conv3")
 # cv2.imwrite("gradcam.jpg", cam)
 
-grad_cam_BAM(model[0], img_gen.__getitem__(30)[0], standard_size)
+# generation of grad_cam
+img_gen2 = generator_image.DataGenerator_image(img_folder, classes_true, names, batch_size=1, num_classes=len(classes))
+img_start_idx = 0
+for num_img in range(len_pred):
+    grad_cam_BAM(model[0], img_gen2.__getitem__(img_start_idx + num_img)[0], standard_size, img_start_idx + num_img)
 
 # predictions = model.predict(pixels)
 
@@ -191,3 +196,11 @@ plt.title('Confusion Matrix (count)')
 
 plt.savefig('confusion_matrix.png')
 # plt.show()
+
+# store the prediction results into csv file
+csv_file = 'predictions.csv'
+with open(csv_file, 'w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(['Img_idx', 'Label'])
+    for i, label in enumerate(classes_pred):
+        writer.writerow([i, label])
