@@ -19,8 +19,8 @@ ddtype = tf.float32
 num_class = 7
 # model = cl.model_attention_final(n_channels_main=16, data_layers=0, cov_layers=2, inner_channels=256, N_exp=3,
 #                                  N_heads=8, num_classes=num_class)      # Note: n_channels_main must be an integer multiple of N_heads
-model = cl_combine.model_combine(n_channels_main=16, data_layers=0, cov_layers=2, inner_channels=256, N_exp=3,
-                                 N_heads=8, num_classes=num_class)
+model = cl_combine.model_combine(n_channels_main=16, n_channels2=16, data_layers=0, cov_layers=1, inner_channels=256, N_exp=3,
+                                 N_heads=1, num_classes=num_class)
 
 
 # batch_size = 1

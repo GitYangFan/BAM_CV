@@ -20,7 +20,7 @@ ddtype = tf.float32
 
 
 class model_combine(tf.keras.Model):
-    def __init__(self, n_channels_main=10, data_layers=2, cov_layers=4, inner_channels=10, N_exp=3, N_heads=5,
+    def __init__(self, n_channels_main=16, n_channels2=16, data_layers=2, cov_layers=4, inner_channels=10, N_exp=3, N_heads=5,
                  num_classes=7):
         # self.BAM = model_attention_final(n_channels_main=n_channels_main, data_layers=data_layers,
         #                                  cov_layers=cov_layers, inner_channels=inner_channels, N_exp=N_exp,
@@ -32,11 +32,12 @@ class model_combine(tf.keras.Model):
         self.cov_layers = cov_layers
         self.inner_channels = inner_channels
         self.n_channels_main = n_channels_main
+        self.n_channels2 = n_channels2
         self.N_exp = N_exp
         self.N_heads = N_heads
         self.num_classes = num_classes
 
-        self.BAM_layers = model_attention_final(n_channels_main=self.n_channels_main, data_layers=self.data_layers,
+        self.BAM_layers = model_attention_final(n_channels_main=self.n_channels_main, n_channels2=self.n_channels2, data_layers=self.data_layers,
                                                 cov_layers=self.cov_layers, inner_channels=self.inner_channels,
                                                 N_exp=self.N_exp,
                                                 N_heads=self.N_heads, num_classes=self.num_classes)
@@ -160,7 +161,7 @@ class model_attention_final(tf.keras.Model):
         # fusion2 = tf.reshape(fusion, shape=(fusion_shape[0], -1))
         # final_output = self.layer_dense(fusion2)
         # final_output = self.layer_softmax2(conv1)
-        return fusion
+        return conv2
 
     def get_config(self):
         return {
