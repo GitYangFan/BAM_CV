@@ -432,10 +432,10 @@ class layer_N_M_d_1_to_N_x_x_C_conv(tf.keras.layers.Layer):  # reduce the comple
         self.conv_layers.append(tf.keras.layers.Activation('relu'))
         self.conv_layers.append(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
         # 4
-        # self.conv_layers.append(
-        #     tf.keras.layers.Conv2D(filters=96, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
-        # self.conv_layers.append(tf.keras.layers.Activation('relu'))
-        # self.conv_layers.append(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
+        self.conv_layers.append(
+            tf.keras.layers.Conv2D(filters=96, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
+        self.conv_layers.append(tf.keras.layers.Activation('relu'))
+        self.conv_layers.append(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
         # # 7
         # self.conv_layers.append(
         #     tf.keras.layers.Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
