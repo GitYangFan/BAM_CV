@@ -161,7 +161,7 @@ class model_attention_final(tf.keras.Model):
         # fusion2 = tf.reshape(fusion, shape=(fusion_shape[0], -1))
         # final_output = self.layer_dense(fusion2)
         # final_output = self.layer_softmax2(conv1)
-        return conv2
+        return fusion
 
     def get_config(self):
         return {
@@ -436,10 +436,10 @@ class layer_N_M_d_1_to_N_x_x_C_conv(tf.keras.layers.Layer):  # reduce the comple
             tf.keras.layers.Conv2D(filters=96, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
         self.conv_layers.append(tf.keras.layers.Activation('relu'))
         self.conv_layers.append(tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
-        # # 7
-        # self.conv_layers.append(
-        #     tf.keras.layers.Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
-        # self.conv_layers.append(tf.keras.layers.Activation('relu'))
+        # 7
+        self.conv_layers.append(
+            tf.keras.layers.Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
+        self.conv_layers.append(tf.keras.layers.Activation('relu'))
         # 9
         self.conv_layers.append(
             tf.keras.layers.Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 1), padding='same', activation=None))
