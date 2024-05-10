@@ -84,7 +84,7 @@ class model_attention_final(tf.keras.Model):
                     layer_N_C_d_d_spd_activation_scaled(N_exp=self.N_exp))
         self.layer_N_M_d_1_to_N_x_x_C_conv = layer_N_M_d_1_to_N_x_x_C_conv(
             out_filters=self.n_channels_main * n_channels2)
-        self.layer_dense = layer_dense2(self.num_classes)
+        # self.layer_dense = layer_dense2(self.num_classes)
 
     def call(self, inputs, **kwargs):
         out = tf.expand_dims(inputs, 3)
@@ -160,9 +160,9 @@ class model_attention_final(tf.keras.Model):
         # fusion = cov3       # only cov
         fusion_shape = tf.shape(fusion)
         fusion2 = tf.reshape(fusion, shape=(fusion_shape[0], -1))
-        final_output = self.layer_dense(fusion2)
+        # final_output = self.layer_dense(fusion2)
         # final_output = self.layer_softmax2(conv1)     # pure CNN
-        return final_output
+        return fusion2
 
     def get_config(self):
         return {
