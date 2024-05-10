@@ -4,11 +4,11 @@ import sklearn.metrics as sk
 import matplotlib.pyplot as plt
 import seaborn as sns
 import data_loader
-import custom_layers_BAM as cl
-# import custom_layers_BAM_new as cl
+# import custom_layers_BAM as cl
+import custom_layers_BAM_new as cl
 import generator_image
 import csv
-# from grad_CAM2 import grad_cam_BAM
+from grad_CAM2 import grad_cam_BAM
 # import cv2
 from tensorflow.keras.applications.resnet50 import (
     ResNet50,
@@ -20,57 +20,57 @@ tf.keras.backend.set_floatx('float32')
 ddtype = tf.float32
 
 # from custom_layers_BAM
-custom_objects = {
-    'cal_logeig': cl.cal_logeig,
-    '_cal_log_cov': cl._cal_log_cov,
-    'baseline': cl.baseline,
-    'layer_dense': cl.layer_dense,
-    'feature_fusion': cl.feature_fusion,
-    'data_N_M_d_c_to_cov_N_C2_C1_C1_image': cl.data_N_M_d_c_to_cov_N_C2_C1_C1_image,
-    '_cal_cov_pooling': cl._cal_cov_pooling,
-    'layer_N_M_d_1_to_N_x_x_C_conv': cl.layer_N_M_d_1_to_N_x_x_C_conv,
-    'layer_N_c_d_d_to_N_d_d_3_LogEig': cl.layer_N_c_d_d_to_N_d_d_3_LogEig,
-    'layer_softmax2': cl.layer_softmax2,
-    'layer_N_M_d_1_to_N_M_d_C_residual': cl.layer_N_M_d_1_to_N_M_d_C_residual,
-    'layer_N_M_d_C_attention_features_for_each_sample': cl.layer_N_M_d_C_attention_features_for_each_sample,
-    'layer_N_M_d_C_attention_samples_for_each_feature': cl.layer_N_M_d_C_attention_samples_for_each_feature,
-    'layer_N_C_d_d_bilinear_attention_cov2cor_spd': cl.layer_N_C_d_d_bilinear_attention_cov2cor_spd,
-    'layer_N_C_d_d_spd_activation_scaled': cl.layer_N_C_d_d_spd_activation_scaled,
-    'data_N_M_d_c_to_cov_N_c_d_d': cl.data_N_M_d_c_to_cov_N_c_d_d,
-    'frob': cl.frob,
-    'layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2': cl.layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2,
-    'layer_channels_dense_res_N_M_d_c': cl.layer_channels_dense_res_N_M_d_c,
-    'lam_init_eps': cl.lam_init_eps,
-    'SoftPDmax_additiveScale_N_c_d_d': cl.SoftPDmax_additiveScale_N_c_d_d,
-    'l1_constraintLessEqual': cl.l1_constraintLessEqual,
-    'l1_constraint_columns': cl.l1_constraint_columns,
-    'MultiHeadAttention_N_M_d_C_Feature': cl.MultiHeadAttention_N_M_d_C_Feature,
-    'MultiHeadAttention_N_M_d_C_Sample': cl.MultiHeadAttention_N_M_d_C_Sample,
-    'MultiHeadAttention_N_C_d_d_bilinear': cl.MultiHeadAttention_N_C_d_d_bilinear,
-    'matrixNormalization_N_d_d_c': cl.matrixNormalization_N_d_d_c,
-    'observationalNormalization_N_M_d_c': cl.observationalNormalization_N_M_d_c
-}
-
-# from custom_layers_BAM_new
 # custom_objects = {
 #     'cal_logeig': cl.cal_logeig,
 #     '_cal_log_cov': cl._cal_log_cov,
 #     'baseline': cl.baseline,
 #     'layer_dense': cl.layer_dense,
-#     'layer_dense2': cl.layer_dense2,
 #     'feature_fusion': cl.feature_fusion,
 #     'data_N_M_d_c_to_cov_N_C2_C1_C1_image': cl.data_N_M_d_c_to_cov_N_C2_C1_C1_image,
 #     '_cal_cov_pooling': cl._cal_cov_pooling,
 #     'layer_N_M_d_1_to_N_x_x_C_conv': cl.layer_N_M_d_1_to_N_x_x_C_conv,
+#     'layer_N_c_d_d_to_N_d_d_3_LogEig': cl.layer_N_c_d_d_to_N_d_d_3_LogEig,
 #     'layer_softmax2': cl.layer_softmax2,
 #     'layer_N_M_d_1_to_N_M_d_C_residual': cl.layer_N_M_d_1_to_N_M_d_C_residual,
+#     'layer_N_M_d_C_attention_features_for_each_sample': cl.layer_N_M_d_C_attention_features_for_each_sample,
+#     'layer_N_M_d_C_attention_samples_for_each_feature': cl.layer_N_M_d_C_attention_samples_for_each_feature,
 #     'layer_N_C_d_d_bilinear_attention_cov2cor_spd': cl.layer_N_C_d_d_bilinear_attention_cov2cor_spd,
 #     'layer_N_C_d_d_spd_activation_scaled': cl.layer_N_C_d_d_spd_activation_scaled,
+#     'data_N_M_d_c_to_cov_N_c_d_d': cl.data_N_M_d_c_to_cov_N_c_d_d,
+#     'frob': cl.frob,
+#     'layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2': cl.layer_N_c_d_d_to_N_d_d_3_LogEig_softmax2,
+#     'layer_channels_dense_res_N_M_d_c': cl.layer_channels_dense_res_N_M_d_c,
+#     'lam_init_eps': cl.lam_init_eps,
 #     'SoftPDmax_additiveScale_N_c_d_d': cl.SoftPDmax_additiveScale_N_c_d_d,
 #     'l1_constraintLessEqual': cl.l1_constraintLessEqual,
 #     'l1_constraint_columns': cl.l1_constraint_columns,
-#     'MultiHeadAttention_N_C_d_d_bilinear': cl.MultiHeadAttention_N_C_d_d_bilinear
+#     'MultiHeadAttention_N_M_d_C_Feature': cl.MultiHeadAttention_N_M_d_C_Feature,
+#     'MultiHeadAttention_N_M_d_C_Sample': cl.MultiHeadAttention_N_M_d_C_Sample,
+#     'MultiHeadAttention_N_C_d_d_bilinear': cl.MultiHeadAttention_N_C_d_d_bilinear,
+#     'matrixNormalization_N_d_d_c': cl.matrixNormalization_N_d_d_c,
+#     'observationalNormalization_N_M_d_c': cl.observationalNormalization_N_M_d_c
 # }
+
+# from custom_layers_BAM_new
+custom_objects = {
+    'cal_logeig': cl.cal_logeig,
+    '_cal_log_cov': cl._cal_log_cov,
+    'baseline': cl.baseline,
+    'layer_dense': cl.layer_dense,
+    'layer_dense2': cl.layer_dense2,
+    'feature_fusion': cl.feature_fusion,
+    'data_N_M_d_c_to_cov_N_C2_C1_C1_image': cl.data_N_M_d_c_to_cov_N_C2_C1_C1_image,
+    '_cal_cov_pooling': cl._cal_cov_pooling,
+    'layer_N_M_d_1_to_N_x_x_C_conv': cl.layer_N_M_d_1_to_N_x_x_C_conv,
+    'layer_softmax2': cl.layer_softmax2,
+    'layer_N_M_d_1_to_N_M_d_C_residual': cl.layer_N_M_d_1_to_N_M_d_C_residual,
+    'layer_N_C_d_d_bilinear_attention_cov2cor_spd': cl.layer_N_C_d_d_bilinear_attention_cov2cor_spd,
+    'layer_N_C_d_d_spd_activation_scaled': cl.layer_N_C_d_d_spd_activation_scaled,
+    'SoftPDmax_additiveScale_N_c_d_d': cl.SoftPDmax_additiveScale_N_c_d_d,
+    'l1_constraintLessEqual': cl.l1_constraintLessEqual,
+    'l1_constraint_columns': cl.l1_constraint_columns,
+    'MultiHeadAttention_N_C_d_d_bilinear': cl.MultiHeadAttention_N_C_d_d_bilinear
+}
 
 # load the pretrained model
 model = {}
