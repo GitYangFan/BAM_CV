@@ -84,7 +84,7 @@ class model_attention_final(tf.keras.Model):
                     layer_N_C_d_d_spd_activation_scaled(N_exp=self.N_exp))
         self.layer_N_M_d_1_to_N_x_x_C_conv = layer_N_M_d_1_to_N_x_x_C_conv(
             out_filters=self.n_channels_main * n_channels2)
-        # self.layer_dense = layer_dense2(self.num_classes)
+        self.layer_dense = layer_dense2(self.num_classes)
 
     def call(self, inputs, **kwargs):
         out = tf.expand_dims(inputs, 3)
@@ -156,12 +156,13 @@ class model_attention_final(tf.keras.Model):
         cov2 = tf.transpose(reconstructed_tensor, [0, 2, 1, 3])
         cov3 = tf.reshape(cov2, [shape_cov[0], shape_cov[2], shape_cov[1] * shape_cov[3]])
 
-        fusion = tf.concat([cov3, conv2], axis=1)
-        # fusion_shape = tf.shape(fusion)
-        # fusion2 = tf.reshape(fusion, shape=(fusion_shape[0], -1))
-        # final_output = self.layer_dense(fusion2)
-        # final_output = self.layer_softmax2(conv1)
-        return fusion
+        fusion = tf.concat([cov3, conv2], axis=1)     # cov+CNN
+        # fusion = cov3       # only cov
+        fusion_shape = tf.shape(fusion)
+        fusion2 = tf.reshape(fusion, shape=(fusion_shape[0], -1))
+        final_output = self.layer_dense(fusion2)
+        # final_output = self.layer_softmax2(conv1)     # pure CNN
+        return final_output
 
     def get_config(self):
         return {
@@ -336,9 +337,9 @@ class layer_dense2(tf.keras.layers.Layer):  # output the classes
         self.linear_model = tf.keras.Sequential(self.dense_layers)
 
     def call(self, inputs):
-        inputs_flatten = self.flatten(inputs)
+        # inputs_flatten = self.flatten(inputs)
         # inputs_flatten = tf.reshape(inputs, shape=(-1, tf.shape(inputs)[1] * tf.shape(inputs)[2] * tf.shape(inputs)[3]))
-        conv = self.linear_model(inputs_flatten)
+        conv = self.linear_model(inputs)
         return conv
 
 
