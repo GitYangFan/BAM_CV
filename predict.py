@@ -8,8 +8,8 @@ import custom_layers_BAM as cl
 # import custom_layers_BAM_new as cl
 import generator_image
 import csv
-from grad_CAM2 import grad_cam_BAM
-import cv2
+# from grad_CAM2 import grad_cam_BAM
+# import cv2
 from tensorflow.keras.applications.resnet50 import (
     ResNet50,
     preprocess_input,
