@@ -156,8 +156,8 @@ class model_attention_final(tf.keras.Model):
         cov2 = tf.transpose(reconstructed_tensor, [0, 2, 1, 3])
         cov3 = tf.reshape(cov2, [shape_cov[0], shape_cov[2], shape_cov[1] * shape_cov[3]])
 
-        fusion = tf.concat([cov3, conv2], axis=1)     # cov+CNN
-        # fusion = cov3       # only cov
+        # fusion = tf.concat([cov3, conv2], axis=1)     # cov+CNN
+        fusion = cov3       # only cov
         fusion_shape = tf.shape(fusion)
         fusion2 = tf.reshape(fusion, shape=(fusion_shape[0], -1))
         # final_output = self.layer_dense(fusion2)
